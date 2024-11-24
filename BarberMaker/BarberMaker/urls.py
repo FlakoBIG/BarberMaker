@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-
+from  BarberMakerApp import views
 urlpatterns = [
     path('admin/', admin.site.urls),
-]
+    path('3/', views.crear_persona, name='crear_persona'),
+    path('2/', views.listar_personas, name='listar_personas'),
+    path('1', views.index, name='index'),]
