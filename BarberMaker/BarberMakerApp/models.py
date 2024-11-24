@@ -64,6 +64,22 @@ class Barberia(models.Model):
             empleado.save()
         self.delete()
 
+# models.py
+class Corte(models.Model):
+    uid = models.CharField(max_length=100, primary_key=True)  # Identificador único
+    nombre = models.CharField(max_length=100)  # Nombre del corte
+    precio = models.DecimalField(max_digits=10, decimal_places=2)  # Precio del corte
+    descripcion = models.TextField(null=True, blank=True)  # Descripción del corte
+    tiempo_estimado = models.IntegerField()  # Tiempo estimado en minutos
+    barberia = models.ForeignKey(
+        'Barberia',
+        on_delete=models.CASCADE,
+        related_name='cortes'  # Relación inversa para acceder a los cortes de una barbería
+    )
+
+    def __str__(self):
+        return f"{self.nombre} - {self.barberia.nombre}"
+
 # Modelo para citas
 class Cita(models.Model):
     uid = models.CharField(max_length=100, primary_key=True)
@@ -74,6 +90,7 @@ class Cita(models.Model):
     empleado = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True, blank=True, related_name="citas")  # Relación opcional con un empleado
     estado = models.CharField(max_length=20, default='pendiente')  # 'pendiente', 'completada', 'cancelada'
     detalles = models.JSONField(default=dict)  # Ejemplo: {"corte": "moderno", "observaciones": "Preferir tijeras"}
+    corte = models.ForeignKey(Corte, on_delete=models.SET_NULL, null=True, blank=True)  # Relación con Corte
 
     @staticmethod
     def verificar_disponibilidad(cliente_id, barberia_id, fecha):
@@ -81,18 +98,3 @@ class Cita(models.Model):
         Verifica si hay disponibilidad para una cita en la fecha indicada.
         """
         return not Cita.objects.filter(cliente_id=cliente_id, barberia_id=barberia_id, fecha=fecha, estado='pendiente').exists()
-    
-class Corte(models.Model):
-    uid = models.CharField(max_length=100, primary_key=True)  # Identificador único
-    nombre = models.CharField(max_length=100)  # Nombre del corte
-    precio = models.DecimalField(max_digits=10, decimal_places=2)  # Precio del corte
-    descripcion = models.TextField(null=True, blank=True)  # Descripción del corte
-    tiempo_estimado = models.DurationField(null=True, blank=True)  # Tiempo estimado en realizar el corte
-    barberia = models.ForeignKey(
-        'Barberia',
-        on_delete=models.CASCADE,
-        related_name='cortes'  # Relación inversa para acceder a los cortes de una barbería
-    )
-
-    def __str__(self):
-        return f"{self.nombre} - {self.barberia.nombre}"

@@ -9,7 +9,7 @@ class PersonaForm(forms.ModelForm):
 class DuenoBarberiaForm(forms.ModelForm):
     class Meta:
         model = DuenoBarberia
-        fields = ['nombre', 'correo', 'telefono','estado_pago']
+        fields = ['nombre', 'correo', 'telefono']
         widgets = {
             'correo': forms.EmailInput(attrs={'type': 'email'}),
         }
@@ -35,7 +35,7 @@ class ClienteForm(forms.ModelForm):
 class EmpleadoForm(forms.ModelForm):
     class Meta:
         model = Empleado
-        fields = ['nombre', 'correo', 'telefono', 'especialidades', 'horario','curriculum']
+        fields = ['nombre', 'correo', 'telefono', 'especialidades', 'horario']
         widgets = {
             'correo': forms.EmailInput(attrs={'type': 'email'}),
             'especialidades': forms.Textarea(attrs={'placeholder': 'Especialidades del empleado'}),
@@ -50,7 +50,7 @@ class EmpleadoForm(forms.ModelForm):
 class BarberiaForm(forms.ModelForm):
     class Meta:
         model = Barberia
-        fields = ['nombre', 'ubicacion', 'horario', 'servicios','empleado']
+        fields = ['nombre', 'ubicacion', 'horario', 'servicios', 'empleados']  # Cambiado de 'empleado' a 'empleados'
         widgets = {
             'horario': forms.Textarea(attrs={'placeholder': 'Horario de la barbería'}),
             'servicios': forms.Textarea(attrs={'placeholder': 'Servicios ofrecidos por la barbería'}),
@@ -64,27 +64,14 @@ class BarberiaForm(forms.ModelForm):
 class CitaForm(forms.ModelForm):
     class Meta:
         model = Cita
-        fields = ['fecha', 'servicio', 'empleado_id', 'detalles','corte']
+        fields = ['fecha', 'servicio', 'cliente', 'barberia', 'empleado', 'estado', 'detalles']
         widgets = {
             'fecha': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'servicio': forms.TextInput(attrs={'placeholder': 'Servicio solicitado'}),
-            'detalles': forms.Textarea(attrs={'placeholder': 'Detalles adicionales'}),
+            'detalles': forms.Textarea(attrs={'placeholder': 'Detalles adicionales (incluye el corte)'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super(CitaForm, self).__init__(*args, **kwargs)
-        self.fields['servicio'].widget.attrs.update({'placeholder': 'Nombre del servicio'})
-
+# forms.py
 class CorteForm(forms.ModelForm):
     class Meta:
         model = Corte
-        fields = ['nombre', 'precio', 'descripcion', 'tiempo_estimado']
-        widgets = {
-            'descripcion': forms.Textarea(attrs={'placeholder': 'Descripción del corte'}),
-            'tiempo_estimado': forms.TextInput(attrs={'placeholder': 'Formato: HH:MM:SS'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(CorteForm, self).__init__(*args, **kwargs)
-        self.fields['nombre'].widget.attrs.update({'placeholder': 'Nombre del corte'})
-        self.fields['precio'].widget.attrs.update({'placeholder': 'Precio del corte'})
+        fields = ['uid', 'nombre', 'precio', 'descripcion', 'barberia']  # Asegúrate de no incluir 'tiempo_estimado'
