@@ -1,0 +1,58 @@
+.sidebar {
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: -250px;
+    height: 100vh;
+    z-index: 999;
+    background: #343a40;
+    transition: all 0.3s;
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+.content {
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.content.active {
+    margin-left: 250px;
+}
+
+.barber-item {
+    background-color: #008B8B;
+    border: none;
+    margin: 5px 0;
+    padding: 15px;
+    border-radius: 5px;
+    color: white;
+}
+
+.barber-item:hover {
+    background-color: #006666;
+}
+
+.status-open {
+    color: #90EE90;
+}
+
+.status-closed {
+    color: #FFB6C1;
+}
+
+.search-box {
+    border: 2px solid #008B8B;
+    border-radius: 5px;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: #006666;
+}
+
+.navbar-dark {
+    background-color: #008B8B !important;
+}

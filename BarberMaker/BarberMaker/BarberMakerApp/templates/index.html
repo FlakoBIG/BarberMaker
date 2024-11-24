@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% load static %}
+    <link href="{% static 'css/Estilo.css' %}" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barber Maker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header p-3">
+            <h3 class="text-white">Menu</h3>
+        </div>
+        <ul class="list-unstyled p-3">
+            <li class="mb-2">
+                <a href="#" class="text-white text-decoration-none">
+                    <i class="fas fa-home me-2"></i>Inicio
+                </a>
+            </li>
+            <li class="mb-2">
+                <a href="#" class="text-white text-decoration-none">
+                    <i class="fas fa-calendar me-2"></i>Citas
+                </a>
+            </li>
+            <li class="mb-2">
+                <a href="#" class="text-white text-decoration-none">
+                    <i class="fas fa-users me-2"></i>Clientes
+                </a>
+            </li>
+            <li class="mb-2">
+                <a href="#" class="text-white text-decoration-none">
+                    <i class="fas fa-cog me-2"></i>Configuración
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Content -->
+    <div class="content">
+        <nav class="navbar navbar-dark">
+            <div class="container-fluid">
+                <button type="button" id="sidebarCollapse" class="btn btn-dark">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="navbar-brand mb-0 h1">Barber Maker</span>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            {% block content %}
+            <!-- AQUI SE MUETRAN LAS COSAS DE LAS OTROAS PAGINAS -->
+            {% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sidebarCollapse').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.querySelector('.content').classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
