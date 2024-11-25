@@ -1,3 +1,5 @@
-correo = 'Daylan@hotmail.com'
-password = 'Daylan@hotmail.com'
-uid = 'zypHjNZQjcXExW6D4MK8lmSfRhr1'
+correo = 'Arturito@hotmail.com'
+password = 'Arturito1234'
+uid = '6sNKTykYf3fK71qkXwq2FOthNTt2'
+nombre = 'Arturito'
+telefono = '99999999'

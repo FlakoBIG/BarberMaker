@@ -1,14 +1,13 @@
-
 from django.shortcuts import render, get_object_or_404, redirect
 from .forms import *
 from .models import *
 from firebase_admin import auth, firestore,exceptions,storage
-import uuid
+import uuid ,os
 from django.contrib import messages
 from django.http import HttpResponse
 from BarberMaker import firebase_config
 from datetime import datetime
-import os
+
 USUARIO_ACTUAL_PATH = os.path.join('usuario', 'usuario_actual.py')
 db = firestore.client()
 
@@ -264,9 +263,9 @@ def eliminar_corte(request, barberia_id, corte_nombre):
     # Redirigir de vuelta a la página de la barbería
     return redirect('administrar_barberia', barberia_id=barberia_id)
 
-def guardar_usuario_actual(correo, password, uid):
+def guardar_usuario_actual(correo, password, nombre, telefono, uid):
     """
-    Guarda el correo, la contraseña y la UID en un archivo Python llamado usuario_actual.py.
+    Guarda el correo, la contraseña, el nombre, el teléfono y la UID en un archivo Python llamado usuario_actual.py.
     Crea la carpeta y el archivo si no existen.
     """
     # Ruta al directorio
@@ -284,6 +283,8 @@ def guardar_usuario_actual(correo, password, uid):
         file.write(f"correo = '{correo}'\n")
         file.write(f"password = '{password}'\n")
         file.write(f"uid = '{uid}'\n")
+        file.write(f"nombre = '{nombre}'\n")
+        file.write(f"telefono = '{telefono}'\n")
 
 #DEINEL
 def login_view(request):
@@ -295,17 +296,29 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            # Intentar autenticar al usuario
+            # Intentar autenticar al usuario y obtener su UID
             user = auth.get_user_by_email(correo)
+            uid = user.uid
 
-            # Si es necesario, verificar la contraseña aquí
+            # Recuperar nombre y teléfono desde Firestore
+            db = firestore.client()
+            usuario_ref = db.collection('usuarios').document(uid)
+            usuario_doc = usuario_ref.get()
 
-            # Guardar las credenciales y la UID en el archivo usuario_actual.py
-            guardar_usuario_actual(correo, password, user.uid)
+            if usuario_doc.exists:
+                usuario_data = usuario_doc.to_dict()
+                nombre = usuario_data.get('nombre', 'No definido')  # Valor por defecto
+                telefono = usuario_data.get('telefono', 'No definido')  # Valor por defecto
 
-            # Mensaje de éxito y redirección
-            messages.success(request, 'Inicio de sesión exitoso.')
-            return redirect('listar_barberias')  # Reemplaza con tu URL deseada
+                # Guardar las credenciales y los datos adicionales en usuario_actual.py
+                guardar_usuario_actual(correo, password, nombre, telefono, uid)
+
+                # Mensaje de éxito y redirección
+                messages.success(request, 'Inicio de sesión exitoso.')
+                return redirect('listar_barberias')  # Reemplaza con tu URL deseada
+            else:
+                messages.error(request, 'No se encontraron los datos del usuario en la base de datos.')
+                return redirect('login')
 
         except exceptions.FirebaseError as e:
             # Capturar errores relacionados con Firebase
@@ -355,6 +368,7 @@ def register_view(request):
                 'nombre': nombre,
                 'correo': correo,
                 'telefono': telefono,
+                'tipo_usuario': 'cliente',
             })
 
             # Guardar en la base de datos local de Django
@@ -370,20 +384,6 @@ def register_view(request):
             return redirect('register')
 
     return render(request, 'register.html')
-
-
-# Vista para cerrar sesión
-def logout_view(request):
-    """
-    Vista para cerrar sesión.
-    """
-    try:
-        del request.session['uid']  # Eliminar el UID de la sesión
-    except KeyError:
-        pass
-
-    messages.success(request, 'Has cerrado sesión exitosamente.')
-    return redirect('login')
 
 # Vista para la página principal (Dashboard) después de iniciar sesión
 def dashboard(request):
@@ -442,12 +442,13 @@ def postular(request, barberia_id):
     barberia_data = barberia.to_dict()
 
     if request.method == 'POST' and request.FILES.get('curriculum'):
-        # Obtener los datos del formulario
+        # Recuperar datos del usuario actual
+        nombre = usuario_actual.nombre  # Obtener nombre del usuario
+        correo = usuario_actual.correo  # Obtener correo del usuario
+        uid = usuario_actual.uid  # Obtener UID del usuario
         curriculum = request.FILES['curriculum']
-        nombre = usuario_actual.correo  # Usar correo cargado automáticamente
-        correo = usuario_actual.correo  # Usar correo cargado automáticamente
 
-        if not (nombre and correo and curriculum):
+        if not (nombre and correo and curriculum and uid):
             messages.error(request, 'Todos los campos son obligatorios.')
             return redirect('postular', barberia_id=barberia_id)
 
@@ -456,11 +457,12 @@ def postular(request, barberia_id):
 
         if file_url:
             try:
-                # Generar un ID único para el postulante
-                postulante_id = str(uuid.uuid4())
+                # Usar el UID como ID del documento del postulante
+                postulante_id = uid  # Usar el UID del usuario como el ID del documento
 
                 # Guardar los datos del postulante en Firestore
                 barberia_ref.collection('postulantes').document(postulante_id).set({
+                    'uid': uid,  # Agregar el UID del usuario
                     'nombre': nombre,
                     'correo': correo,
                     'curriculum_url': file_url
@@ -476,11 +478,11 @@ def postular(request, barberia_id):
             messages.error(request, 'Hubo un problema al subir tu currículum. Intenta nuevamente.')
             return redirect('postular', barberia_id=barberia_id)
 
-    # Agregar los datos del usuario al contexto
+    # Agregar los datos del usuario al contexto para la plantilla
     return render(request, 'Postular.html', {
         'barberia': barberia_data,
-        'nombre': usuario_actual.correo,
-        'correo': usuario_actual.correo
+        'nombre': usuario_actual.nombre,
+        'correo': usuario_actual.correo,
     })
 
 def lista_de_postulantes(request, barberia_id):
@@ -510,7 +512,8 @@ def lista_de_postulantes(request, barberia_id):
             lista_postulantes.append({
                 'nombre': data.get('nombre'),  # Cambia 'Nombre' por 'nombre'
                 'correo': data.get('correo'),  # Cambia 'Correo' por 'correo'
-                'curriculum_url': data.get('curriculum_url')  # Cambia 'url' por 'curriculum_url'
+                'curriculum_url': data.get('curriculum_url'),
+                'uid':data.get('uid')
             })
 
         # Si la lista está vacía, muestra un mensaje en la consola
@@ -520,11 +523,41 @@ def lista_de_postulantes(request, barberia_id):
         # Pasar los datos a la plantilla
         return render(request, 'ListaPostulantes.html', {
             'postulantes': lista_postulantes,
-            'barberia_nombre': barberia.to_dict().get('nombre')  # Nombre de la barbería
+            'barberia_nombre': barberia.to_dict().get('nombre'),# Nombre de la barbería
+            'barberia_id':barberia_id,
+
         })
 
     except Exception as e:
         print(f"Error al recuperar los postulantes: {e}")
         messages.error(request, 'Hubo un problema al recuperar la lista de postulantes.')
         return redirect('administrar_barberia', barberia_id=barberia_id)
+
+def contratar_postulante(request, barberia_id, postulante_uid):
+    try:
+        # Referencia a la barbería y al postulante
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        postulante_ref = barberia_ref.collection('postulantes').document(postulante_uid)
+        postulante_data = postulante_ref.get().to_dict()
+
+        if postulante_data:
+            # Crear un nuevo trabajador en la colección 'trabajadores' con el uid del postulante como ID
+            trabajadores_ref = barberia_ref.collection('trabajadores')
+            nuevo_trabajador_ref = trabajadores_ref.document(postulante_uid)  # Usar el UID del postulante como ID
+            nuevo_trabajador_ref.set(postulante_data)
+
+            # Eliminar al postulante después de contratarlo (opcional)
+            postulante_ref.delete()
+
+            messages.success(request, f"{postulante_data['nombre']} ha sido contratado exitosamente.")
+        else:
+            messages.error(request, "No se encontraron datos del postulante.")
+
+    except Exception as e:
+        print(f"Error al contratar al postulante: {e}")
+        messages.error(request, "Ocurrió un error al procesar la solicitud.")
+
+    # Redirigir a la lista de postulantes
+    return redirect('lista_de_postulantes', barberia_id=barberia_id)
+
 

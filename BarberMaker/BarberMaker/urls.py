@@ -29,10 +29,12 @@ urlpatterns = [
 
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
-    path('logout/', views.logout_view, name='logout'),
+    path('logout/', views.login_view, name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('postular/<str:barberia_id>', views.postular, name='postular'),  # La vista para enviar postulaciones
-    path('lista_de_postulantes/<str:barberia_id>', views.lista_de_postulantes, name='lista_de_postulantes'),  # La vista para enviar postulaciones
+    path('postular/<str:barberia_id>', views.postular, name='postular'),  
+    path('lista_de_postulantes/<str:barberia_id>', views.lista_de_postulantes, name='lista_de_postulantes'),
+    path('contratar_postulante/<str:barberia_id>/<str:postulante_uid>/', views.contratar_postulante, name='contratar_postulante'),
+  
 
 
 

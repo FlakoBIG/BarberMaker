@@ -18,6 +18,12 @@
             <h2 class="mb-4">Lista de Postulantes - {{ barberia_nombre }}</h2>
             <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
         </div>
+    <!-- Back button -->
+    <div class="nav-bar mb-3 back-button">
+        <a href="{% url 'administrar_barberia' barberia_id %}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
         <div class="search-container">
             <input type="text" placeholder="Buscar" class="form-control">
         </div>
@@ -46,7 +52,10 @@
                                     class="btn btn-curriculum btn-primary">
                                      Curriculum
                                     </a>
-                                    <button class="btn btn-contratar btn-success">Contratar</button>
+                                    <form action="{% url 'contratar_postulante' barberia_id postulante.uid %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-contratar btn-success">Contratar</button>
+                                    </form>
                                     <button class="btn btn-eliminar btn-danger" data-bs-toggle="modal" 
                                             data-bs-target="#modalEliminar">
                                         Eliminar
