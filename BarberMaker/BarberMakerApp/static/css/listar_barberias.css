@@ -1,0 +1,95 @@
+.barber-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #009688;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+}
+
+.search-button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+    stroke: #009688;
+    stroke-width: 2;
+    fill: none;
+}
+
+.barbershop-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.barbershop-item {
+    background-color: #009688;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.barbershop-item:hover {
+    background-color: #00897b;
+}
+
+.scissors-icon {
+    color: white;
+    margin-right: 15px;
+    font-size: 18px;
+}
+
+.barbershop-name {
+    color: white;
+    flex-grow: 1;
+    font-size: 18px;
+}
+
+.status {
+    padding: 5px 15px;
+    border-radius: 20px;
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.open {
+    background-color: #4caf50;
+    color: white;
+}
+
+.closed {
+    background-color: #f44336;
+    color: white;
+}
+
+.arrow {
+    color: white;
+    font-size: 12px;
+}
+a {
+    text-decoration: none;
+}

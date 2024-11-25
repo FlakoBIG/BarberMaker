@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     {% load static %}
-    <link href="{% static 'css/Estilo.css' %}" rel="stylesheet">
+    <link href="{% static 'css/Estilo_base.css' %}" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barber Maker</title>
@@ -12,28 +12,24 @@
 <body>
     <!-- Sidebar -->
     <nav id="sidebar" class="sidebar">
-        <div class="sidebar-header p-3">
-            <h3 class="text-white">Menu</h3>
+        <div class="sidebar-header p-3 d-flex align-items-center">
+            <!-- Logo de la empresa (limitar tamaño) -->
+            <img src="{% static 'img/logo.png' %}" alt="Logo de la empresa" class="img-fluid me-2" style="max-width: 50px; max-height: 50px;">
         </div>
         <ul class="list-unstyled p-3">
             <li class="mb-2">
-                <a href="#" class="text-white text-decoration-none">
+                <a href="../../../../../listar_barberias/" class="text-white text-decoration-none">
                     <i class="fas fa-home me-2"></i>Inicio
                 </a>
             </li>
             <li class="mb-2">
-                <a href="#" class="text-white text-decoration-none">
-                    <i class="fas fa-calendar me-2"></i>Citas
+                <a href="../../../../../crear_barberia/" class="text-white text-decoration-none">
+                    <i class="fas fa-calendar me-2"></i>Ingresar mi barberia
                 </a>
             </li>
             <li class="mb-2">
-                <a href="#" class="text-white text-decoration-none">
-                    <i class="fas fa-users me-2"></i>Clientes
-                </a>
-            </li>
-            <li class="mb-2">
-                <a href="#" class="text-white text-decoration-none">
-                    <i class="fas fa-cog me-2"></i>Configuración
+                <a href="../../../../../administrar_barberia/aSnYzDFMMVB7qZ0xz7E1" class="text-white text-decoration-none">
+                    <i class="fas fa-calendar me-2"></i>Mi barberia
                 </a>
             </li>
         </ul>
@@ -50,9 +46,9 @@
             </div>
         </nav>
 
-        <div class="container mt-4">
+        <div class="container mt-4 contenedor">
             {% block content %}
-            <!-- AQUI SE MUETRAN LAS COSAS DE LAS OTROAS PAGINAS -->
+            <!-- AQUI SE MUETRAN LAS COSAS DE LAS OTRAS PAGINAS -->
             {% endblock %}
         </div>
     </div>

@@ -56,3 +56,8 @@
 .navbar-dark {
     background-color: #008B8B !important;
 }
+
+.contenedor {
+    background-color: rgb(221, 221, 221);
+    border-radius: 15px;
+}

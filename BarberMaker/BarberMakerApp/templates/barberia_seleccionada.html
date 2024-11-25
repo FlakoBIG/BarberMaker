@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link href="{% static 'css/barberia_seleccioanda.css' %}" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container-fluid barbershop-detail">
+    <!-- Header con nombre y íconos -->
+    <div class="header mb-3">
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+        <h1>{{ barberia.nombre }}</h1>
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+    </div>
+
+    <!-- Back button -->
+    <div class="nav-bar mb-3">
+        <a href="{% url 'listar_barberias' %}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Columna izquierda -->
+        <div class="col-md-6">
+            <div class="info-section">
+                <p class="info-item"><span class="dot">●</span> Horario: {{ barberia.horario1}} - {{ barberia.horario2}}</p>
+                <p class="info-item">
+                    <span class="dot">●</span> Estado: 
+                    {% if barberia.estado == 1 %}
+                      <span class="status open">Abierto</span>
+                    {% else %}
+                      <span class="status closed">Cerrado</span>
+                    {% endif %}
+                </p>
+                <p class="info-item"><span class="dot">●</span> Dirección: {{ barberia.direccion }}</p>
+
+                <div class="map-container">
+                    {% if barberia.maps %}
+                        <div class="google-map">
+                            {{ barberia.maps|safe }}
+                        </div>
+                    {% else %}
+                        <div class="map-placeholder">
+                            <p>No hay mapa disponible</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="apply-section">
+                    <p>¿Quieres trabajar aquí?</p>
+                    <button class="btn btn-info">Postular</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha con lista de servicios -->
+        <div class="col-md-6">
+            <div class="services-list mb-3">
+                {% if cortes %}
+                    {% for nombre, precio in cortes.items %}
+                        <div class="service-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3>{{ nombre }}</h3>
+                                    <p class="mb-0"><span class="dot">●</span> Precio: {{ precio|floatformat:2 }}</p>
+                                </div>
+                                <div>
+                                    <!-- Botón para reservar -->
+                                    <button class="btn btn-success btn-sm me-2">Reservar</button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Mensaje de "No hay cortes" estilizado -->
+                    <div class="alert alert-info text-center" role="alert">
+                        <strong>No hay ningún corte disponible.</strong><br>
+                        ¡Aún no se han añadido servicios a esta barbería! Agrega cortes para empezar a ofrecerlos.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

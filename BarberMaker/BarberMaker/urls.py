@@ -18,6 +18,19 @@ from django.urls import path
 from  BarberMakerApp import views
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('3/', views.crear_persona, name='crear_persona'),
-    path('2/', views.listar_personas, name='listar_personas'),
-    path('1', views.index, name='index'),]
+    path('', views.opciones, name='opciones'),
+    path('crear_barberia/', views.crear_barberia, name='crear_barberia'),
+    path('listar_barberias/', views.listar_barberias, name='listar_barberias'),
+    path('barberia/<str:barberia_id>/', views.barberia_seleccionada, name='barberia_seleccionada'),
+    path('administrar_barberia/<str:barberia_id>/', views.administrar_barberia, name='administrar_barberia'),
+    path('modificar_barberia/<str:barberia_id>/', views.modificar_barberia, name='modificar_barberia'),
+    path('agregar_corte/<str:barberia_id>/', views.agregar_corte, name='agregar_corte'),
+    path('eliminar_corte/<str:barberia_id>/<str:corte_nombre>/', views.eliminar_corte, name='eliminar_corte'),
+
+
+
+
+
+
+    
+    ]

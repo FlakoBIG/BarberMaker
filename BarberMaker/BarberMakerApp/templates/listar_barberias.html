@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link href="{% static 'css/listar_barberias.css' %}" rel="stylesheet">
+<div class="barber-container">
+    <!-- Barra de búsqueda -->
+    <div class="search-box">
+        <input type="text" placeholder="Buscar" class="search-input">
+        <button class="search-button">
+            <svg viewBox="0 0 24 24" class="search-icon">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Lista de barberías -->
+    <div class="barbershop-list">
+        {% for barberia in barberias %}
+        <a href="{% url 'barberia_seleccionada' barberia.id %}" class="barbershop-item">
+            <div class="scissors-icon">✂️</div>
+            <div class="barbershop-name">{{ barberia.nombre }}</div>
+            {% if barberia.estado == 1 %}
+            <div class="status open">Abierto</div>
+            {% else %}
+            <div class="status closed">Cerrado</div>
+            {% endif %}
+            <div class="arrow">▶</div>
+        </a>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

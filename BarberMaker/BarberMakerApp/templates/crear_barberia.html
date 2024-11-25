@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link href="{% static 'css/crear_barberia.css' %}" rel="stylesheet">
+<div class="form-container">
+    <h1>Crear Barbería</h1>
+    
+    <form method="post" class="barberia-form">
+        {% csrf_token %}
+        
+        {% for field in barberia_form %}
+        <div class="form-field">
+            {{ field.label_tag }}
+            {{ field }}
+        </div>
+        {% endfor %}
+        
+        <button type="submit">Crear Barbería</button>
+    </form>
+</div>
+
+{% endblock %}

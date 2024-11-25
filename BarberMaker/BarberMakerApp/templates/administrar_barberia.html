@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<link href="{% static 'css/barberia_seleccioanda.css' %}" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+<div class="container-fluid barbershop-detail">
+    <!-- Cabecera de la barbería -->
+    <div class="header mb-3">
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+        <h1>{{ barberia.nombre }}</h1>
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+    </div>
+
+    <!-- Botón de volver -->
+    <div class="nav-bar mb-3">
+        <a href="{% url 'listar_barberias' %}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="row">
+        <!-- Columna izquierda con información de la barbería -->
+        <div class="col-md-6 info-section">
+            <div class="mb-3">
+                <p class="info-item"><span class="dot">●</span> Nombre: {{ barberia.nombre }}</p>
+                <p class="info-item"><span class="dot">●</span> Horario: {{ barberia.horario1 }} - {{ barberia.horario2 }}</p>
+                <p class="info-item"><span class="dot">●</span> Dirección: {{ barberia.direccion }}</p>
+            </div>
+
+            <!-- Sección del mapa de la barbería -->
+            <div class="map-container mb-3">
+                {% if barberia.maps %}
+                    <div class="google-map">
+                        {{ barberia.maps|safe }}
+                    </div>
+                {% else %}
+                    <div class="map-placeholder">
+                        <p>No hay mapa disponible</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Botón para editar la información -->
+            <button class="btn btn-success w-100 mb-3" data-bs-toggle="modal" data-bs-target="#editInfoModal">Editar información</button>
+        </div>
+
+        <!-- Columna derecha con lista de servicios -->
+        <div class="col-md-6">
+                <div class="services-list mb-3">
+                    {% if cortes %}
+                    {% for nombre, precio in cortes.items %}
+                    <div class="service-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3>{{ nombre }}</h3>
+                                <p class="mb-0"><span class="dot">●</span> Precio: {{ precio|floatformat:2 }}</p>
+                            </div>
+                            <div>
+                                <!-- Botón para abrir el modal -->
+                                <button type="button" class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" 
+                                        data-nombre="{{ nombre }}" data-url="{% url 'eliminar_corte' barberia_id=barberia.id corte_nombre=nombre %}">
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                
+                    {% else %}
+                        <!-- Mensaje de "No hay cortes" estilizado -->
+                        <div class="alert alert-info text-center" role="alert">
+                            <strong>No hay ningún corte disponible.</strong><br>
+                            ¡Aún no se han añadido servicios a esta barbería! Agrega cortes para empezar a ofrecerlos.
+                        </div>
+                    {% endif %}
+                </div>
+
+            <!-- Botones inferiores -->
+            <div class="action-buttons">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-success w-100">Postulantes</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-success w-100">Trabajadores</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#agregarCorteModal">Agregar corte</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-success w-100">Fotos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Información de la Barbería -->
+<div class="modal fade" id="editInfoModal" tabindex="-1" aria-labelledby="editInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editInfoModalLabel">Editar Información de la Barbería</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'modificar_barberia' barberia.id %}">
+
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ barberia.nombre }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="horario1" class="form-label">Horario de apertura</label>
+                        <input type="text" class="form-control" id="horario1" name="horario1" value="{{ barberia.horario1 }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="horario2" class="form-label">Horario de cierre</label>
+                        <input type="text" class="form-control" id="horario2" name="horario2" value="{{ barberia.horario2 }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion" value="{{ barberia.direccion }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="maps" class="form-label">Mapa (Código HTML)</label>
+                        <textarea class="form-control" id="maps" name="maps" rows="3">{{ barberia.maps }}</textarea>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+                </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar un corte -->
+<div class="modal fade" id="agregarCorteModal" tabindex="-1" aria-labelledby="agregarCorteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarCorteModalLabel">Agregar Corte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Mostrar mensaje de error si el corte ya existe -->
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre del Corte</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="precio" class="form-label">Precio</label>
+                        <input type="text" class="form-control" id="precio" name="precio" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar Corte</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar el corte <span id="corteNombre"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <!-- Formulario para eliminar el corte -->
+                <form id="deleteForm" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}

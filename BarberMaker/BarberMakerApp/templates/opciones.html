@@ -1,0 +1,15 @@
+<!-- crear_persona.html -->
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <div class="container mt-4">
+        <h2>Bienvesnido al sistema</h2>
+        
+        <!-- Botones para cada ruta -->
+        <div class="btn-group" role="group" aria-label="Basic example">
+            <a href="{% url 'crear_barberia' %}" class="btn btn-warning">Registrar Barbería</a>
+            <a href="{% url 'listar_barberias' %}" class="btn btn-success">Lista barberias</a>
+        </div>
+    </div>
+{% endblock %}

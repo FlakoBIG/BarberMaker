@@ -1,0 +1,98 @@
+.barbershop-detail {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Header */
+.header {
+    background-color: #009688;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pole-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Navigation */
+.back-button {
+    color: #009688;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+/* Info Section */
+.info-section {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.info-item {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.dot {
+    color: #009688;
+    margin-right: 8px;
+}
+
+/* Map */
+.map-container {
+    border: 2px solid #009688;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 300px;
+}
+
+.google-map,
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+}
+
+/* Services */
+.service-item {
+    background-color: #009688;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.service-item h3 {
+    margin: 0 0 10px 0;
+}
+
+/* Scrollable services list */
+.services-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Custom button colors */
+.btn-success {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.btn-info {
+    background-color: #80CBC4;
+    border-color: #80CBC4;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
