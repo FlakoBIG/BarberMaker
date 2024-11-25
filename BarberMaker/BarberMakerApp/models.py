@@ -29,12 +29,7 @@ class Usuario(models.Model):
     nombre = models.CharField(max_length=100)
     correo = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15, null=True, blank=True)
-    
-    # Rol no explícito: El comportamiento del usuario lo define su relación con otros modelos.
-    # El rol puede ser inferido a partir de la relación con otros modelos (ej. Barbería, Cita).
-    
-    def __str__(self):
-        return self.nombre
+
     
 class Postulacion(models.Model):
     nombre = models.CharField(max_length=255)

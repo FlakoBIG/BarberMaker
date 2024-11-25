@@ -1,0 +1,90 @@
+.postulante-row {
+    background-color: #009688;
+    color: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    width: 100%;
+}
+.barbershop-detail {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+.search-container {
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+}
+.search-container input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.btn-contratar {
+    border: none;
+    color: white;
+    padding: 5px 15px;
+}
+.btn-eliminar {
+    border: none;
+    color: white;
+    padding: 5px 15px;
+}
+.table {
+    border: none;
+    width: 100%;
+}
+.table tr {
+    margin-bottom: 10px;
+    display: block;
+    width: 100%;
+}
+.table td {
+    border: none;
+    vertical-align: middle;
+}
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+.user-email {
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.contenedor-blanco{
+    width: 100%;
+    border-radius: 5px;
+}
+.btn-curriculum {
+border: none;
+color: white;
+padding: 5px 15px;
+text-decoration: none;
+border-radius: 5px;
+}
+.btn-curriculum:hover {
+    background-color: #0056b3;  /* Azul oscuro al pasar el mouse */
+}
+/* Header */
+.header {
+    background-color: #009688;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pole-icon {
+    width: 40px;
+    height: 40px;
+}

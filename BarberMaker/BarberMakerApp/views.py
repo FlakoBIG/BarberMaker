@@ -3,10 +3,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .forms import *
 from .models import *
 from firebase_admin import auth, firestore,exceptions,storage
+import uuid
 from django.contrib import messages
 from django.http import HttpResponse
 from BarberMaker import firebase_config
 from datetime import datetime
+import os
+USUARIO_ACTUAL_PATH = os.path.join('usuario', 'usuario_actual.py')
 db = firestore.client()
 
 def opciones(request):
@@ -261,7 +264,26 @@ def eliminar_corte(request, barberia_id, corte_nombre):
     # Redirigir de vuelta a la página de la barbería
     return redirect('administrar_barberia', barberia_id=barberia_id)
 
+def guardar_usuario_actual(correo, password, uid):
+    """
+    Guarda el correo, la contraseña y la UID en un archivo Python llamado usuario_actual.py.
+    Crea la carpeta y el archivo si no existen.
+    """
+    # Ruta al directorio
+    directorio = os.path.join('usuario')
 
+    # Crear el directorio si no existe
+    if not os.path.exists(directorio):
+        os.makedirs(directorio)
+
+    # Ruta completa al archivo
+    ruta_archivo = os.path.join(directorio, 'usuario_actual.py')
+
+    # Escribir las credenciales y la UID en el archivo
+    with open(ruta_archivo, 'w') as file:
+        file.write(f"correo = '{correo}'\n")
+        file.write(f"password = '{password}'\n")
+        file.write(f"uid = '{uid}'\n")
 
 #DEINEL
 def login_view(request):
@@ -273,20 +295,25 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            # Aquí intentas autenticar al usuario
+            # Intentar autenticar al usuario
             user = auth.get_user_by_email(correo)
-            # Realizar la verificación de la contraseña (si es necesario)
 
-            # Si el login es exitoso, redirigir o manejar el inicio de sesión
+            # Si es necesario, verificar la contraseña aquí
+
+            # Guardar las credenciales y la UID en el archivo usuario_actual.py
+            guardar_usuario_actual(correo, password, user.uid)
+
+            # Mensaje de éxito y redirección
             messages.success(request, 'Inicio de sesión exitoso.')
-            return redirect('listar_barberias')  # Reemplaza 'home' con tu URL deseada
+            return redirect('listar_barberias')  # Reemplaza con tu URL deseada
+
         except exceptions.FirebaseError as e:
-            # Captura cualquier error relacionado con Firebase
+            # Capturar errores relacionados con Firebase
             messages.error(request, f'Error al iniciar sesión: {e}')
             return redirect('login')
 
     return render(request, 'login.html')
-# Vista para registrar un nuevo usuario
+
 def register_view(request):
     """
     Vista para registrar un nuevo usuario.
@@ -297,8 +324,26 @@ def register_view(request):
         password = request.POST.get('password')
         telefono = request.POST.get('telefono')
 
+        # Validar que todos los campos están presentes
+        if not all([nombre, correo, password, telefono]):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('register')
+
         try:
-            # Crear un usuario en Firebase Authentication
+            # Verificar si el correo ya existe en Firebase
+            user_query = auth.get_user_by_email(correo)
+            if user_query:
+                messages.error(request, 'El correo ya está registrado en Firebase.')
+                return redirect('register')
+        except exceptions.NotFoundError:
+            # Esto indica que el correo no existe en Firebase, continuar con el registro
+            pass
+        except exceptions.FirebaseError as e:
+            messages.error(request, f'Error al verificar el usuario: {e}')
+            return redirect('register')
+
+        try:
+            # Crear el usuario en Firebase Authentication
             user = auth.create_user(
                 email=correo,
                 password=password,
@@ -312,17 +357,20 @@ def register_view(request):
                 'telefono': telefono,
             })
 
-            # También guardar en la base de datos local de Django
-            usuario = Usuario(uid=user.uid, nombre=nombre, correo=correo, telefono=telefono)
-            usuario.save()
+            # Guardar en la base de datos local de Django
+            if not Usuario.objects.filter(correo=correo).exists():
+                usuario = Usuario(uid=user.uid, nombre=nombre, correo=correo, telefono=telefono)
+                usuario.save()
 
             messages.success(request, 'Usuario registrado exitosamente. ¡Inicia sesión!')
             return redirect('login')
+
         except exceptions.FirebaseError as e:
             messages.error(request, f'Error al registrar el usuario: {e}')
             return redirect('register')
 
     return render(request, 'register.html')
+
 
 # Vista para cerrar sesión
 def logout_view(request):
@@ -355,86 +403,128 @@ def dashboard(request):
     user_data = user_doc.to_dict()
     return render(request, 'dashboard.html', {'user': user_data})
 
-def subir_curriculum(curriculum_file, nombre, correo):
+def subir_curriculum(curriculum_file, barberia_id):
+    """
+    Sube un archivo PDF a Firebase Storage y retorna la URL pública.
+    """
     try:
         # Obtener el bucket de Firebase Storage
         bucket = storage.bucket()
 
-        # Subir el archivo al bucket con una ruta específica
-        blob = bucket.blob(f'curriculums/{curriculum_file.name}')
-        blob.upload_from_file(curriculum_file)
+        # Generar un nombre único para el archivo y subirlo
+        archivo_id = str(uuid.uuid4())
+        archivo_path = f'curriculums/{barberia_id}/{archivo_id}_{curriculum_file.name}'
+        blob = bucket.blob(archivo_path)
+        blob.upload_from_file(curriculum_file, content_type=curriculum_file.content_type)
 
         # Obtener la URL pública del archivo subido
-        file_url = blob.public_url
-        print(f"Archivo subido con éxito. URL pública: {file_url}")
-
-        # Puedes guardar esta URL en Firestore si deseas asociar el archivo con un documento de Firestore
-        db.collection('postulaciones').add({
-            'nombre': nombre,
-            'correo': correo,
-            'curriculum_url': file_url,  # URL pública del archivo
-            'estado': 'pendiente',  # Estado inicial de la postulación
-        })
-
-        print("Postulación guardada en Firestore exitosamente.")
-        return file_url  # Retornar la URL para confirmación
+        blob.make_public()
+        return blob.public_url  # Retornar la URL para guardar en Firestore
     except Exception as e:
         print(f"Error al subir el archivo: {e}")
         return None
 
 def postular(request, barberia_id):
-    # Conectarse a la base de datos de Firestore
+    """
+    Maneja la postulación de un usuario a una barbería específica.
+    """
+    import usuario.usuario_actual as usuario_actual  # Importar datos del usuario actual
     db = firestore.client()
 
-    # Buscar la barbería usando el ID de la URL
+    # Buscar la barbería usando el ID proporcionado
     barberia_ref = db.collection('datos-barberias').document(barberia_id)
     barberia = barberia_ref.get()
 
-    if barberia.exists:
-        barberia_data = barberia.to_dict()
-        barberia_nombre = barberia_data.get('nombre')  # Obtener el nombre de la barbería
-
-    else:
+    if not barberia.exists:
         messages.error(request, 'La barbería no existe.')
-        return redirect('index')  # Redirigir a la página de inicio si no se encuentra la barbería
+        return redirect('index')  # Redirigir si la barbería no existe
+
+    barberia_data = barberia.to_dict()
 
     if request.method == 'POST' and request.FILES.get('curriculum'):
-        # Obtener el archivo del currículum y otros datos del formulario
+        # Obtener los datos del formulario
         curriculum = request.FILES['curriculum']
-        nombre = request.POST.get('nombre')
-        correo = request.POST.get('correo')
+        nombre = usuario_actual.correo  # Usar correo cargado automáticamente
+        correo = usuario_actual.correo  # Usar correo cargado automáticamente
 
-        # Llamar a la función para subir el archivo a Firebase Storage y guardarlo en Firestore
-        file_url = subir_curriculum(curriculum, nombre, correo)
+        if not (nombre and correo and curriculum):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('postular', barberia_id=barberia_id)
+
+        # Subir el currículum y obtener la URL pública
+        file_url = subir_curriculum(curriculum, barberia_id)
 
         if file_url:
-            messages.success(request, 'Postulación enviada exitosamente.')
-            return redirect('index')  # Redirigir a la página de inicio después de una postulación exitosa
+            try:
+                # Generar un ID único para el postulante
+                postulante_id = str(uuid.uuid4())
+
+                # Guardar los datos del postulante en Firestore
+                barberia_ref.collection('postulantes').document(postulante_id).set({
+                    'nombre': nombre,
+                    'correo': correo,
+                    'curriculum_url': file_url
+                })
+
+                messages.success(request, 'Postulación enviada exitosamente.')
+                return redirect('index')
+            except Exception as e:
+                print(f"Error al guardar los datos en Firestore: {e}")
+                messages.error(request, 'Hubo un problema al guardar la postulación. Intenta nuevamente.')
+                return redirect('postular', barberia_id=barberia_id)
         else:
             messages.error(request, 'Hubo un problema al subir tu currículum. Intenta nuevamente.')
-            return redirect('postular', barberia_id=barberia_id)  # Mantener el ID de la barbería
+            return redirect('postular', barberia_id=barberia_id)
 
-    return render(request, 'Postular.html', {'barberia': barberia_data})
+    # Agregar los datos del usuario al contexto
+    return render(request, 'Postular.html', {
+        'barberia': barberia_data,
+        'nombre': usuario_actual.correo,
+        'correo': usuario_actual.correo
+    })
 
-def lista_de_postulantes(request):
+def lista_de_postulantes(request, barberia_id):
     try:
-        # Recuperar todas las postulaciones desde Firestore
-        postulaciones_ref = db.collection('postulaciones')
-        postulaciones = postulaciones_ref.stream()
+        # Conectar a Firestore
+        db = firestore.client()
 
-        # Crear una lista de diccionarios con los datos de las postulaciones
+        # Referencia a la barbería específica
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        barberia = barberia_ref.get()
+
+        if not barberia.exists:
+            messages.error(request, 'La barbería no existe.')
+            return redirect('administrar_barberia', barberia_id=barberia_id)  # Redirigir si la barbería no existe
+
+        # Obtener los postulantes de la barbería
+        postulantes_ref = barberia_ref.collection('postulantes')
+        postulantes = postulantes_ref.stream()
+
+        # Crear una lista con los datos de los postulantes
         lista_postulantes = []
-        for post in postulaciones:
+        for post in postulantes:
             data = post.to_dict()
+            print(f"Postulante encontrado: {data}")  # Mensaje de depuración
+            
+            # Asegúrate de que las claves coincidan con las de tu Firestore
             lista_postulantes.append({
-                'nombre': data.get('nombre'),
-                'curriculum_url': data.get('curriculum_url')
+                'nombre': data.get('nombre'),  # Cambia 'Nombre' por 'nombre'
+                'correo': data.get('correo'),  # Cambia 'Correo' por 'correo'
+                'curriculum_url': data.get('curriculum_url')  # Cambia 'url' por 'curriculum_url'
             })
 
+        # Si la lista está vacía, muestra un mensaje en la consola
+        if not lista_postulantes:
+            print("No se encontraron postulantes para esta barbería.")
+
         # Pasar los datos a la plantilla
-        return render(request, 'ListaPostulantes.html', {'postulantes': lista_postulantes})
+        return render(request, 'ListaPostulantes.html', {
+            'postulantes': lista_postulantes,
+            'barberia_nombre': barberia.to_dict().get('nombre')  # Nombre de la barbería
+        })
 
     except Exception as e:
-        print(f"Error al recuperar las postulaciones: {e}")
+        print(f"Error al recuperar los postulantes: {e}")
         messages.error(request, 'Hubo un problema al recuperar la lista de postulantes.')
-        return redirect('index')  # Redirigir en caso de error
+        return redirect('administrar_barberia', barberia_id=barberia_id)
+

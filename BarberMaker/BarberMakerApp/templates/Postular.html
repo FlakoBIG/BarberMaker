@@ -8,7 +8,7 @@
     <title>Barber Maker - Postulación</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    
+
     <div class="container mt-4">
         <h2 class="mb-4">Postúlate para trabajar con {{ barberia.nombre }}</h2> <!-- Mostrar el nombre de la barbería -->
         <p class="text-muted">Adjunta tu currículum para que el administrador de la barbería te evalúe.</p>
@@ -32,15 +32,15 @@
                 <input type="file" name="curriculum" class="form-control" id="curriculum" accept=".pdf,.doc,.docx" required>
             </div>
 
-            <!-- Campos de nombre y correo -->
+            <!-- Campos de nombre y correo (rellenados automáticamente y no editables) -->
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre</label>
-                <input type="text" name="nombre" class="form-control" id="nombre" required>
+                <input type="text" name="nombre" class="form-control" id="nombre" value="{{ nombre }}" readonly>
             </div>
 
             <div class="mb-3">
                 <label for="correo" class="form-label">Correo</label>
-                <input type="email" name="correo" class="form-control" id="correo" required>
+                <input type="email" name="correo" class="form-control" id="correo" value="{{ correo }}" readonly>
             </div>
             
             <!-- Botón de envío -->

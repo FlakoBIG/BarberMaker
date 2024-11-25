@@ -32,7 +32,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('postular/<str:barberia_id>', views.postular, name='postular'),  # La vista para enviar postulaciones
-    path('lista_p/', views.lista_de_postulantes, name='lista_p'),  # La vista para enviar postulaciones
+    path('lista_de_postulantes/<str:barberia_id>', views.lista_de_postulantes, name='lista_de_postulantes'),  # La vista para enviar postulaciones
 
 
 
