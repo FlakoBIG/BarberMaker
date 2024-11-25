@@ -57,7 +57,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h3>{{ nombre }}</h3>
-                                <p class="mb-0"><span class="dot">●</span> Precio: {{ precio|floatformat:2 }}</p>
+                                <p class="mb-0"><span class="dot">●</span> Precio: {{ precio }}</p>
                             </div>
                             <div>
                                 <!-- Botón para abrir el modal -->
@@ -152,14 +152,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Mostrar mensaje de error si el corte ya existe -->
-                {% if error %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </div>
-                {% endif %}
-
-                <form method="POST">
+                <form method="POST" action="{% url 'agregar_corte' barberia_id=barberia.id %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="nombre" class="form-label">Nombre del Corte</label>
@@ -175,6 +168,9 @@
         </div>
     </div>
 </div>
+
+
+
 
 
 

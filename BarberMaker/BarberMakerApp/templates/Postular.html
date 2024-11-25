@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% load static %}
+    <link href="{% static 'css/Estilo.css' %}" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barber Maker - Postulación</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    
+    <div class="container mt-4">
+        <h2 class="mb-4">Postúlate para trabajar con {{ barberia.nombre }}</h2> <!-- Mostrar el nombre de la barbería -->
+        <p class="text-muted">Adjunta tu currículum para que el administrador de la barbería te evalúe.</p>
+
+        <!-- Mostrar mensajes de éxito o error -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mt-3" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Formulario de postulación -->
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Input para seleccionar el archivo del currículum -->
+            <div class="mb-3">
+                <label for="curriculum" class="form-label">Selecciona tu currículum (PDF, DOC, DOCX)</label>
+                <input type="file" name="curriculum" class="form-control" id="curriculum" accept=".pdf,.doc,.docx" required>
+            </div>
+
+            <!-- Campos de nombre y correo -->
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input type="text" name="nombre" class="form-control" id="nombre" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="correo" class="form-label">Correo</label>
+                <input type="email" name="correo" class="form-control" id="correo" required>
+            </div>
+            
+            <!-- Botón de envío -->
+            <button type="submit" class="btn w-100 text-white" style="background-color: #009688;">
+                Postular
+            </button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -27,6 +27,13 @@ urlpatterns = [
     path('agregar_corte/<str:barberia_id>/', views.agregar_corte, name='agregar_corte'),
     path('eliminar_corte/<str:barberia_id>/<str:corte_nombre>/', views.eliminar_corte, name='eliminar_corte'),
 
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('logout/', views.logout_view, name='logout'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('postular/<str:barberia_id>', views.postular, name='postular'),  # La vista para enviar postulaciones
+    path('lista_p/', views.lista_de_postulantes, name='lista_p'),  # La vista para enviar postulaciones
+
 
 
 

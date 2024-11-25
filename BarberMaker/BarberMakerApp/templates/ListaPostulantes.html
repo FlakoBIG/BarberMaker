@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Postulantes</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Lista de Postulantes</h2>
+        {% if postulantes %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Currículum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for postulante in postulantes %}
+                        <tr>
+                            <td>{{ postulante.nombre }}</td>
+                            <td>
+                                <!-- Modificado para hacer el enlace descargable -->
+                                <a href="{{ postulante.curriculum_url }}?alt=media" download="{{ postulante.nombre }}_curriculum.docx" class="btn btn-primary">
+                                    Descargar Currículum
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No hay postulantes registrados.</p>
+        {% endif %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

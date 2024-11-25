@@ -1,5 +1,5 @@
 from django import forms
-from .models import Barberia,Corte
+from .models import Barberia,Corte,Usuario
 from django import forms
 
 class CorteForm(forms.ModelForm):
@@ -17,3 +17,14 @@ class BarberiaForm(forms.Form):
     maps = forms.CharField(widget=forms.Textarea, required=False, label='Mapa')
     horario1 = forms.TimeField(label='Abre', widget=forms.TimeInput(attrs={'type': 'time'}))
     horario2 = forms.TimeField(label='Cierra', widget=forms.TimeInput(attrs={'type': 'time'}))
+
+#deinel
+class UsuarioForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = '__all__'  # Usando '__all__' para incluir todos los campos del modelo
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'correo': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
+        }

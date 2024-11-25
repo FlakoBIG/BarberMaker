@@ -48,9 +48,14 @@
                 </div>
 
                 <div class="apply-section">
-                    <p>¿Quieres trabajar aquí?</p>
-                    <button class="btn btn-info">Postular</button>
+                    <div class="apply-section">
+                        <p>¿Quieres trabajar aquí?</p>
+                        <a href="{% url 'postular' barberia_id=barberia.id %}" class="btn btn-info">
+                            Postular
+                        </a>
+                    </div>                    
                 </div>
+                
             </div>
         </div>
 
@@ -63,7 +68,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h3>{{ nombre }}</h3>
-                                    <p class="mb-0"><span class="dot">●</span> Precio: {{ precio|floatformat:2 }}</p>
+                                    <p class="mb-0"><span class="dot">●</span> Precio: {{ precio }}</p>
                                 </div>
                                 <div>
                                     <!-- Botón para reservar -->
