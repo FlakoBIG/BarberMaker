@@ -35,7 +35,7 @@
                 </p>
                 <p class="info-item"><span class="dot">●</span> Dirección: {{ barberia.direccion }}</p>
 
-                <div class="map-container">
+                <div class="map-container col-md-11 mx-auto mb-3">
                     {% if barberia.maps %}
                         <div class="google-map">
                             {{ barberia.maps|safe }}
@@ -84,6 +84,9 @@
                         ¡Aún no se han añadido servicios a esta barbería! Agrega cortes para empezar a ofrecerlos.
                     </div>
                 {% endif %}
+            </div>
+            <div class="col-6">
+                <a href="{% url 'agregar_foto_cliente' barberia_id=barberia.id %}" class="btn btn-success w-100">Fotos</a>
             </div>
         </div>
     </div>

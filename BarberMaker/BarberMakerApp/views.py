@@ -263,9 +263,47 @@ def eliminar_corte(request, barberia_id, corte_nombre):
     # Redirigir de vuelta a la página de la barbería
     return redirect('administrar_barberia', barberia_id=barberia_id)
 
-def guardar_usuario_actual(correo, password, nombre, telefono, uid):
+def modificar_corte(request, barberia_id, corte_nombre):
+    try:
+        # Acceder al documento que contiene el diccionario de cortes
+        cortes_ref = db.collection('datos-barberias').document(barberia_id)
+        cortes_doc = cortes_ref.get()
+
+        if not cortes_doc.exists:
+            raise Exception("Documento de cortes no encontrado")
+
+        cortes = cortes_doc.to_dict().get('cortes', {})
+
+        # Verificar si el corte existe en el diccionario
+        if corte_nombre not in cortes:
+            raise Exception("Corte no encontrado en el diccionario")
+
+        if request.method == 'POST':
+            # Obtener el nuevo precio del formulario
+            nuevo_precio = request.POST.get('precio')
+
+            if nuevo_precio:
+                try:
+                    # Convertir el precio a int y actualizar el diccionario
+                    nuevo_precio_int = int(nuevo_precio)
+                    cortes[corte_nombre] = nuevo_precio_int  # Actualizar el precio del corte
+
+                    # Actualizar el documento en Firestore
+                    cortes_ref.update({'cortes': cortes})
+                    print(f"Precio actualizado para el corte '{corte_nombre}': {nuevo_precio_int}")
+                except ValueError:
+                    return render(request, 'error.html', {'error': 'Precio no válido'})
+
+            # Redirigir a la vista principal de la barbería
+            return redirect('administrar_barberia', barberia_id=barberia_id)
+
+    except Exception as e:
+        return render(request, 'error.html', {'error': str(e)})
+
+def guardar_usuario_actual(correo, password, nombre, telefono, uid, tipo_usuario):
     """
-    Guarda el correo, la contraseña, el nombre, el teléfono y la UID en un archivo Python llamado usuario_actual.py.
+    Guarda el correo, la contraseña, el nombre, el teléfono, la UID y el tipo de usuario 
+    en un archivo Python llamado usuario_actual.py.
     Crea la carpeta y el archivo si no existen.
     """
     # Ruta al directorio
@@ -278,15 +316,15 @@ def guardar_usuario_actual(correo, password, nombre, telefono, uid):
     # Ruta completa al archivo
     ruta_archivo = os.path.join(directorio, 'usuario_actual.py')
 
-    # Escribir las credenciales y la UID en el archivo
+    # Escribir las credenciales y los datos en el archivo
     with open(ruta_archivo, 'w') as file:
         file.write(f"correo = '{correo}'\n")
         file.write(f"password = '{password}'\n")
         file.write(f"uid = '{uid}'\n")
         file.write(f"nombre = '{nombre}'\n")
         file.write(f"telefono = '{telefono}'\n")
+        file.write(f"tipo_usuario = '{tipo_usuario}'\n")
 
-#DEINEL
 def login_view(request):
     """
     Vista para iniciar sesión de un usuario.
@@ -300,7 +338,7 @@ def login_view(request):
             user = auth.get_user_by_email(correo)
             uid = user.uid
 
-            # Recuperar nombre y teléfono desde Firestore
+            # Recuperar datos adicionales desde Firestore
             db = firestore.client()
             usuario_ref = db.collection('usuarios').document(uid)
             usuario_doc = usuario_ref.get()
@@ -309,9 +347,10 @@ def login_view(request):
                 usuario_data = usuario_doc.to_dict()
                 nombre = usuario_data.get('nombre', 'No definido')  # Valor por defecto
                 telefono = usuario_data.get('telefono', 'No definido')  # Valor por defecto
+                tipo_usuario = usuario_data.get('tipo_usuario', 'No definido')  # Valor por defecto
 
                 # Guardar las credenciales y los datos adicionales en usuario_actual.py
-                guardar_usuario_actual(correo, password, nombre, telefono, uid)
+                guardar_usuario_actual(correo, password, nombre, telefono, uid, tipo_usuario)
 
                 # Mensaje de éxito y redirección
                 messages.success(request, 'Inicio de sesión exitoso.')
@@ -487,9 +526,6 @@ def postular(request, barberia_id):
 
 def lista_de_postulantes(request, barberia_id):
     try:
-        # Conectar a Firestore
-        db = firestore.client()
-
         # Referencia a la barbería específica
         barberia_ref = db.collection('datos-barberias').document(barberia_id)
         barberia = barberia_ref.get()
@@ -559,5 +595,178 @@ def contratar_postulante(request, barberia_id, postulante_uid):
 
     # Redirigir a la lista de postulantes
     return redirect('lista_de_postulantes', barberia_id=barberia_id)
+
+def lista_de_trabajadores(request, barberia_id):
+    try:
+        # Referencia a la barbería específica
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        barberia = barberia_ref.get()
+
+        if not barberia.exists:
+            messages.error(request, 'La barbería no existe.')
+            return redirect('administrar_barberia', barberia_id=barberia_id)  # Redirigir si la barbería no existe
+
+        # Obtener los trabajadores de la barbería
+        trabajadores_ref = barberia_ref.collection('trabajadores')
+        trabajadores = trabajadores_ref.stream()
+
+        # Crear una lista con los datos de los trabajadores
+        lista_trabajadores = []
+        for trab in trabajadores:
+            data = trab.to_dict()
+            print(f"Trabajador encontrado: {data}")  # Mensaje de depuración
+            
+            # Asegúrate de que las claves coincidan con las de tu Firestore
+            lista_trabajadores.append({
+                'nombre': data.get('nombre'),  # Cambia 'Nombre' por 'nombre'
+                'correo': data.get('correo'),  # Cambia 'Correo' por 'correo'
+                'curriculum_url': data.get('curriculum_url'),
+                'uid': data.get('uid')
+            })
+
+        # Si la lista está vacía, muestra un mensaje en la consola
+        if not lista_trabajadores:
+            print("No se encontraron trabajadores para esta barbería.")
+
+        # Pasar los datos a la plantilla
+        return render(request, 'ListaTrabajadores.html', {
+            'trabajadores': lista_trabajadores,
+            'barberia_nombre': barberia.to_dict().get('nombre'),  # Nombre de la barbería
+            'barberia_id': barberia_id,
+        })
+
+    except Exception as e:
+        print(f"Error al recuperar los trabajadores: {e}")
+        messages.error(request, 'Hubo un problema al recuperar la lista de trabajadores.')
+        return redirect('administrar_barberia', barberia_id=barberia_id)
+
+def galeria_fotos(request, barberia_id):
+    try:
+        # Referencia a la barbería específica y su subcolección Fotos
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        fotos_ref = barberia_ref.collection('Fotos')
+        fotos = fotos_ref.stream()
+
+        # Lista de fotos
+        lista_fotos = []
+        for foto in fotos:
+            data = foto.to_dict()
+            lista_fotos.append({
+                'nombre': data.get('nombre'),
+                'url': data.get('url'),
+                'id_foto': data.get('id_foto'),
+            })
+
+        # Manejar la ausencia de fotos
+        if not lista_fotos:
+            print("No hay fotos en la galería.")  # Mensaje informativo en la consola
+
+        return render(request, 'Fotos_admin.html', {
+            'fotos': lista_fotos,
+            'barberia_id': barberia_id,
+        })
+
+    except Exception as e:
+        print(f"Error al cargar la galería: {e}")
+        messages.error(request, "Error al cargar la galería.")
+        return redirect('administrar_barberia', barberia_id=barberia_id)
+
+def agregar_foto_cliente(request, barberia_id):
+    try:
+        # Referencia a la barbería específica y su subcolección Fotos
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        fotos_ref = barberia_ref.collection('Fotos')
+        fotos = fotos_ref.stream()
+
+        # Lista de fotos
+        lista_fotos = []
+        for foto in fotos:
+            data = foto.to_dict()
+            lista_fotos.append({
+                'nombre': data.get('nombre'),
+                'url': data.get('url'),
+                'id_foto': data.get('id_foto'),
+            })
+
+        # Manejar la ausencia de fotos
+        if not lista_fotos:
+            print("No hay fotos en la galería.")  # Mensaje informativo en la consola
+
+        # Renderiza la plantilla de fotos sin opciones de agregar fotos
+        return render(request, 'Fotos.html', {
+            'fotos': lista_fotos,
+            'barberia_id': barberia_id,
+        })
+
+    except Exception as e:
+        print(f"Error al cargar la galería: {e}")
+        messages.error(request, "Error al cargar la galería.")
+        return redirect('administrar_barberia', barberia_id=barberia_id)
+
+def agregar_foto(request, barberia_id):
+    if request.method == 'POST':
+        try:
+            # Datos del formulario
+            nombre = request.POST.get('nombre')
+            archivo = request.FILES['archivo']
+            id_foto = str(uuid.uuid4())  # Generar ID aleatorio para la foto
+
+            # Referencia al bucket de Firebase Storage
+            bucket = storage.bucket()  # Esto accede al bucket de Firebase configurado por defecto.
+            
+            # Crear una referencia al archivo en el bucket
+            blob = bucket.blob(f'fotos/{archivo.name}')
+            
+            # Subir el archivo
+            blob.upload_from_file(archivo, content_type=archivo.content_type)
+
+            # Hacer que la URL sea pública
+            blob.make_public()
+            url = blob.public_url  # Obtener la URL pública
+
+            # Guardar los datos en Firestore
+            foto_ref = db.collection('datos-barberias').document(barberia_id).collection('Fotos').document(id_foto)
+            foto_ref.set({
+                'nombre': nombre,
+                'url': url,
+                'id_foto': id_foto,
+            })
+
+            messages.success(request, 'Foto agregada exitosamente.')
+        except Exception as e:
+            print(f"Error al agregar foto: {e}")
+            messages.error(request, 'Error al agregar la foto.')
+        return redirect('galeria_fotos', barberia_id=barberia_id)
+ 
+def eliminar_foto(request, barberia_id, id_foto):
+    try:
+        # Referencia al documento de la foto en Firestore
+        foto_ref = db.collection('datos-barberias').document(barberia_id).collection('Fotos').document(id_foto)
+        foto_data = foto_ref.get()
+
+        if foto_data.exists:
+            # Obtén la URL o el nombre del archivo para eliminar de Storage
+            foto_info = foto_data.to_dict()
+            url = foto_info.get('url')
+
+            # Elimina el archivo de Firebase Storage
+            if url:
+                bucket = storage.bucket()
+                blob_name = url.split("fotos/")[-1]  # Obtén el nombre del archivo desde la URL
+                blob = bucket.blob(f'fotos/{blob_name}')
+                blob.delete()
+
+            # Elimina el documento de Firestore
+            foto_ref.delete()
+
+            messages.success(request, 'Foto eliminada exitosamente.')
+        else:
+            messages.error(request, 'La foto no existe.')
+
+    except Exception as e:
+        print(f"Error al eliminar la foto: {e}")
+        messages.error(request, 'Error al eliminar la foto.')
+
+    return redirect('galeria_fotos', barberia_id=barberia_id)
 
 

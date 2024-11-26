@@ -21,16 +21,12 @@ class Barberia(models.Model):
     def __str__(self):
         return self.nombre
     
-    
-#deinel
-
 class Usuario(models.Model):
     uid = models.CharField(max_length=255)
     nombre = models.CharField(max_length=100)
     correo = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15, null=True, blank=True)
 
-    
 class Postulacion(models.Model):
     nombre = models.CharField(max_length=255)
     correo = models.EmailField()

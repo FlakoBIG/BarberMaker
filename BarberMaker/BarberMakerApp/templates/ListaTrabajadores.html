@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Postulantes</title>
+    <title>Lista de Trabajadores</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     {% load static %}
     <link href="{% static 'css/lista_postulantes.css' %}" rel="stylesheet">
@@ -15,7 +15,7 @@
         
         <div class="header mb-3">
             <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
-            <h2 class="mb-4">Lista de Postulantes - {{ barberia_nombre }}</h2>
+            <h2 class="mb-4">Lista de Trabajadores - {{ barberia_nombre }}</h2>
             <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
         </div>
     <!-- Back button -->
@@ -25,35 +25,30 @@
         </a>
     </div>
 
-
-        {% if postulantes %}
+        {% if trabajadores %}
             <table class="table">
                 <tbody>
-                    {% for postulante in postulantes %}
+                    {% for trabajador in trabajadores %}
                         <tr class="postulante-row">
                             <td class="col-md-4  contenedor-blanco">
                                 <div class="user-info ">
                                     <div>
                                         <i class="bi bi-person-circle me-2"></i>
-                                        {{ postulante.nombre }}
+                                        {{ trabajador.nombre }}
                                     </div>
                                     <div class="user-email">
                                         <i class="bi bi-envelope-fill"></i>
-                                        {{ postulante.correo }}
+                                        {{ trabajador.correo }}
                                     </div>
                                 </div>
                             </td>
                             <td class="col-md-8">
                                 <div class="actions">
-                                    <a href="{{ postulante.curriculum_url }}?alt=media" 
-                                    download="{{ postulante.nombre }}_curriculum.pdf" 
+                                    <a href="{{ trabajador.curriculum_url }}?alt=media" 
+                                    download="{{ trabajador.nombre }}_curriculum.pdf" 
                                     class="btn btn-curriculum btn-primary">
                                      Curriculum
                                     </a>
-                                    <form action="{% url 'contratar_postulante' barberia_id postulante.uid %}" method="post">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-contratar btn-success">Contratar</button>
-                                    </form>
                                     <button class="btn btn-eliminar btn-danger" data-bs-toggle="modal" 
                                             data-bs-target="#modalEliminar">
                                         Eliminar
@@ -66,7 +61,7 @@
             </table>
         {% else %}
             <div class="alert alert-warning" role="alert">
-                No hay postulantes registrados en esta barbería.
+                No hay trabajadores registrados en esta barbería.
             </div>
         {% endif %}
     </div>
@@ -80,7 +75,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este postulante?
+                    ¿Estás seguro de que deseas eliminar este trabajador?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
