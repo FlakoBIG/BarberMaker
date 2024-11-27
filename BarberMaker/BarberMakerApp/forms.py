@@ -22,7 +22,7 @@ class BarberiaForm(forms.Form):
 class UsuarioForm(forms.ModelForm):
     class Meta:
         model = Usuario
-        fields = '__all__'  # Usando '__all__' para incluir todos los campos del modelo
+        fields = '__all__'
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
             'correo': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),

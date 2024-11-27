@@ -1,32 +1,33 @@
 .barber-container {
-    width: 100%;
-    max-width: 500px;
-    margin: 20px auto;
-    padding: 0 15px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .search-box {
     position: relative;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .search-input {
     width: 100%;
-    padding: 10px 15px;
+    padding: 10px 40px 10px 15px;
     border: 2px solid #009688;
     border-radius: 8px;
     font-size: 16px;
     outline: none;
+    box-sizing: border-box;
 }
 
 .search-button {
     position: absolute;
-    right: 10px;
+    right: 5px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
+    padding: 0;
 }
 
 .search-icon {
@@ -40,7 +41,8 @@
 .barbershop-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 10px; /* Espaciado entre los ítems */
+    width: 100%; /* Asegura que ocupe todo el ancho */
 }
 
 .barbershop-item {
@@ -49,6 +51,9 @@
     border-radius: 8px;
     display: flex;
     align-items: center;
+    justify-content: space-between; 
+    width: 100%; 
+    box-sizing: border-box;
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -65,15 +70,15 @@
 
 .barbershop-name {
     color: white;
-    flex-grow: 1;
+    flex-grow: 1; /* Ocupa todo el espacio restante */
     font-size: 18px;
 }
 
 .status {
     padding: 5px 15px;
     border-radius: 20px;
-    margin-right: 15px;
     font-size: 14px;
+    white-space: nowrap; /* Evita que el texto se corte */
 }
 
 .open {
@@ -88,8 +93,11 @@
 
 .arrow {
     color: white;
-    font-size: 12px;
+    font-size: 18px; /* Ajustado para mayor claridad */
 }
+
 a {
     text-decoration: none;
+    width: 100%; /* Permite que los enlaces ocupen todo el ancho */
+    display: block; /* Hace clic en cualquier parte del ítem */
 }

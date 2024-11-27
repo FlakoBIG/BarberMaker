@@ -48,6 +48,10 @@
     color: #009688;
     margin-right: 8px;
 }
+.dot2 {
+    color: #e1e1e1;
+    margin-right: 8px;
+}
 
 /* Map */
 .map-container {

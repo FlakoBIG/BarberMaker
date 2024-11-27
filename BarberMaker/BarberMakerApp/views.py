@@ -4,9 +4,9 @@ from .models import *
 from firebase_admin import auth, firestore,exceptions,storage
 import uuid ,os
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponseForbidden
 from BarberMaker import firebase_config
-from datetime import datetime
+from datetime import datetime,timedelta
 
 USUARIO_ACTUAL_PATH = os.path.join('usuario', 'usuario_actual.py')
 db = firestore.client()
@@ -15,6 +15,9 @@ def opciones(request):
     return render(request,'opciones.html')
 
 def listar_barberias(request):
+    # Recuperar el texto de búsqueda de los parámetros GET
+    query = request.GET.get('q', '')  # Si no hay búsqueda, se asigna una cadena vacía
+
     # Recuperar la colección "barberias-registradas"
     barberias_ref = db.collection('barberias-registradas')
     documentos = barberias_ref.stream()
@@ -23,18 +26,77 @@ def listar_barberias(request):
     for doc in documentos:
         # Obtener los datos del documento
         barberia = doc.to_dict()
-        # Depuración para verificar el contenido del documento
-        print(f"Documento ID: {doc.id}, Datos: {barberia}")
-
         # Agregar el ID del documento
         barberia['id'] = doc.id
-        barberias.append(barberia)
+
+        # Si hay un término de búsqueda, filtrar por nombre
+        if query.lower() in barberia.get('nombre', '').lower():
+            barberias.append(barberia)
+        elif not query:  # Si no hay búsqueda, agregar todas las barberías
+            barberias.append(barberia)
 
     # Verifica qué datos se están pasando a la plantilla
-    print(f"Barberías: {barberias}")
+    print(f"Barberías filtradas: {barberias}")
 
     # Renderizar los datos en la plantilla
-    return render(request, 'listar_barberias.html', {'barberias': barberias})
+    return render(request, 'listar_barberias.html', {'barberias': barberias, 'query': query})
+
+def eliminar_barberia(request, barberia_id):
+    from usuario.usuario_actual import tipo_usuario, uid
+
+    # Verificar si el tipo de usuario actual es "dueño"
+    if not tipo_usuario or tipo_usuario.lower() != 'duenio':
+        return redirect('listar_barberias')
+
+    try:
+        # Eliminar documentos en las colecciones relacionadas
+        colecciones_relacionadas = ['Fotos', 'postulantes', 'trabajadores']
+        
+        for coleccion in colecciones_relacionadas:
+            # Obtener todos los documentos en la colección asociada
+            docs = db.collection(coleccion).where('barberia', '==', barberia_id).stream()
+            for doc in docs:
+                # Eliminar cada documento
+                doc.reference.delete()
+
+        # Eliminar la barbería de 'datos-barberias'
+        db.collection('datos-barberias').document(barberia_id).delete()
+
+        # Eliminar la barbería de 'barberias-registradas'
+        db.collection('barberias-registradas').document(barberia_id).delete()
+
+        # Actualizar el documento del usuario para dejar el campo 'barberia' vacío y cambiar 'tipo_usuario' a 'cliente'
+        db.collection('usuarios').document(uid).update({
+            'barberia': '',  # Borra el campo 'barberia'
+            'tipo_usuario': 'cliente'  # Cambia el tipo de usuario a 'cliente'
+        })
+
+        # Actualizar el archivo usuario_actual.py para reflejar los cambios
+        ruta_archivo = os.path.join('usuario', 'usuario_actual.py')
+
+        # Leer los datos existentes del archivo
+        with open(ruta_archivo, 'r') as file:
+            lines = file.readlines()
+
+        # Escribir los nuevos valores en el archivo
+        with open(ruta_archivo, 'w') as file:
+            for line in lines:
+                if line.startswith("tipo_usuario"):
+                    file.write("tipo_usuario = 'cliente'\n")  # Cambiar tipo_usuario a 'cliente'
+                elif line.startswith("barberia"):
+                    file.write("barberia = ''\n")  # Vaciar el campo barberia
+                else:
+                    file.write(line)
+
+        # Mensaje de éxito (puedes usar notificaciones o redirecciones)
+        print(f"Barbería {barberia_id} eliminada con éxito.")
+
+    except Exception as e:
+        # Manejo de errores
+        print(f"Error al eliminar la barbería: {e}")
+
+    # Redirigir a la lista de barberías
+    return redirect('listar_barberias')
 
 def barberia_seleccionada(request, barberia_id):
     db = firestore.client()
@@ -42,33 +104,148 @@ def barberia_seleccionada(request, barberia_id):
     barberia_doc = barberia_ref.get()
 
     if barberia_doc.exists:
-        barberia_data = barberia_doc.to_dict()  # Obtener los datos del documento
-        cortes = barberia_data.get('cortes', {})  # Obtener los cortes (si existen)
-        
+        barberia_data = barberia_doc.to_dict()
+        cortes = barberia_data.get('cortes', {})
+        precio=barberia_data.get('precio',{})
+
+        citas_ref = db.collection('citas').where('barberia_id', '==', barberia_id)
+        cita_docs = citas_ref.stream()
+
+        citas = []
+        for cita_doc in cita_docs:
+            cita = cita_doc.to_dict()
+            citas.append(cita)
+
+        horario1_str = barberia_data.get('horario1')
+        horario2_str = barberia_data.get('horario2')
+
+        horario1 = datetime.strptime(horario1_str, '%H:%M')
+        horario2 = datetime.strptime(horario2_str, '%H:%M')
+
+        horarios_disponibles = []
+        current_time = horario1
+        while current_time <= horario2:
+            horarios_disponibles.append(current_time.strftime('%H:%M'))
+            current_time += timedelta(minutes=30)
+
+        if request.method == 'POST':
+            hora_cita = request.POST.get('hora')
+            corte_seleccionado = request.POST.get('corte')
+            corte_seleccionado1 = request.POST.get('precio')
+            
+            correo_usuario = request.POST.get('correo')
+
+            hora_cita_obj = datetime.strptime(hora_cita, '%H:%M')
+
+            if horario1 <= hora_cita_obj <= horario2:
+                # Crear la cita en la base de datos
+                cita_data = {
+                    'barberia_id': barberia_id,
+                    'hora': hora_cita,
+                    'corte': corte_seleccionado,
+                    'precio':corte_seleccionado1 ,
+                    'correo_usuario': correo_usuario,
+                }
+
+                db.collection('citas').add(cita_data)
+                messages.success(request, 'Cita registrada exitosamente.')
+                return redirect('barberia_seleccionada', barberia_id=barberia_id)
+
+            else:
+                return render(request, 'barberia_seleccionada.html', {
+                    'barberia': barberia_data,
+                    'cortes': cortes,
+                    'precio':precio,
+                    'citas': citas,
+                    'error': 'La hora seleccionada está fuera del horario de atención de la barbería.'
+                })
+
         return render(request, 'barberia_seleccionada.html', {
             'barberia': barberia_data,
-            'cortes': cortes,  # Pasar los cortes al template
+            'cortes': cortes,
+            'precio':precio,
+            'citas': citas,
+            'horarios_disponibles': horarios_disponibles,
         })
     else:
         return render(request, 'error.html', {'message': 'Barbería no encontrada'})
 
-def administrar_barberia(request, barberia_id):
-    db = firestore.client()
-    barberia_ref = db.collection('datos-barberias').document(barberia_id)
-    barberia_doc = barberia_ref.get()
+def administrar_barberia(request):
+    from usuario.usuario_actual import tipo_usuario, uid  # Asumiendo que tienes el UID del usuario actual
 
-    if barberia_doc.exists:
-        barberia_data = barberia_doc.to_dict()  # Obtener los datos del documento
-        cortes = barberia_data.get('cortes', {})  # Obtener los cortes (si existen)
-        
-        return render(request, 'administrar_barberia.html', {
-            'barberia': barberia_data,
-            'cortes': cortes,  # Pasar los cortes al template
-        })
+    # Verificar que el usuario sea dueño
+    if not tipo_usuario or tipo_usuario.lower() != 'duenio':
+        return redirect('listar_barberias')
+
+    # Recuperar el UID del usuario actual
+    if not uid:
+        return render(request, 'error.html', {'message': 'Usuario no autenticado'})
+
+    # Buscar en la base de datos de Firebase el campo 'barberia' en el documento del usuario actual
+    usuario_ref = db.collection('usuarios').document(uid)
+    usuario_doc = usuario_ref.get()
+
+    if usuario_doc.exists:
+        # Obtener el ID de la barbería desde el campo 'barberia'
+        barberia_id = usuario_doc.to_dict().get('barberia')
+
+        if not barberia_id:
+            return render(request, 'error.html', {'message': 'No se ha asociado una barbería al usuario'})
+
+        # Buscar los datos de la barbería con el ID obtenido
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        barberia_doc = barberia_ref.get()
+
+        if barberia_doc.exists:
+            barberia_data = barberia_doc.to_dict()  # Obtener los datos de la barbería
+            cortes = barberia_data.get('cortes', {})  # Obtener los cortes disponibles
+            precio = barberia_data.get('precio', {})  # Obtener los precios
+            estado = barberia_data.get('estado', 0)  # Obtener el estado actual (0 o 1)
+            citas_ref = db.collection('citas').where('barberia_id', '==', barberia_id)  # Consultar citas asociadas
+            citas_docs = citas_ref.stream()
+
+            citas = []
+            for cita_doc in citas_docs:
+                cita = cita_doc.to_dict()
+                cita['id'] = cita_doc.id  # Asegurarse de que cada cita tiene un ID válido
+
+                cita['nombre_corte'] = cita.get('corte', 'Desconocido')
+                cita['precio_corte'] = cita.get('precio', 'No disponible')
+                cita['correo_usuario'] = cita.get('correo', 'No registrado')
+                cita['hora_cita'] = cita.get('hora', 'No especificada')
+
+                citas.append(cita)
+
+            # Lógica para cambiar el estado de la barbería
+            if request.method == 'POST':
+                # Cambiar el estado de la barbería
+                nuevo_estado = 1 if estado == 0 else 0  # Si está cerrado, lo abrimos; si está abierto, lo cerramos.
+                barberia_ref.update({'estado': nuevo_estado})  # Actualizar el estado en Firestore
+
+                # Actualizar también en barberias-registradas
+                barberias_registradas_ref = db.collection('barberias-registradas').document(barberia_id)
+                barberias_registradas_ref.update({'estado': nuevo_estado})  # Actualizar el estado en barberias-registradas
+
+                return redirect('administrar_barberia')  # Redirigir para actualizar la página
+
+            return render(request, 'administrar_barberia.html', {
+                'barberia': barberia_data,
+                'cortes': cortes,
+                'precio': precio,
+                'citas': citas,  # Pasar las citas con el ID a la plantilla
+                'estado': estado  # Pasar el estado a la plantilla para mostrarlo
+            })
+        else:
+            return render(request, 'error.html', {'message': 'Barbería no encontrada'})
     else:
-        return render(request, 'error.html', {'message': 'Barbería no encontrada'})
+        return render(request, 'error.html', {'message': 'Usuario no encontrado'})
 
 def crear_barberia(request):
+    from usuario.usuario_actual import tipo_usuario, uid
+    # Verificar si el tipo_usuario es 'cliente'
+    if not tipo_usuario or tipo_usuario.lower() != 'cliente':
+        return redirect('listar_barberias')
+
     if request.method == 'POST':
         barberia_form = BarberiaForm(request.POST)
         
@@ -120,6 +297,30 @@ def crear_barberia(request):
             # Guardar en 'barberias-registradas' con el mismo ID
             db.collection('barberias-registradas').document(barberia_id).set(barberia_registrada_data)
 
+            # Actualizar el campo tipo_usuario en la colección 'usuarios'
+            db.collection('usuarios').document(uid).update({
+                'tipo_usuario': 'duenio',
+                'barberia': barberia_id  # Añadimos el campo barberia con la UID de la barbería
+            })
+
+            # Ahora actualizar el archivo usuario_actual.py directamente
+            # Abre el archivo usuario_actual.py para actualizarlo
+            ruta_archivo = os.path.join('usuario', 'usuario_actual.py')
+
+            # Leer los datos existentes del archivo
+            with open(ruta_archivo, 'r') as file:
+                lines = file.readlines()
+
+            # Escribir en el archivo para actualizar tipo_usuario y barberia
+            with open(ruta_archivo, 'w') as file:
+                for line in lines:
+                    if line.startswith("tipo_usuario"):
+                        file.write(f"tipo_usuario = 'duenio'\n")  # Cambia 'tipo_usuario' a 'duenio'
+                    elif line.startswith("barberia"):  # Actualiza el campo barberia
+                        file.write(f"barberia = '{barberia_id}'\n")  # Guarda la UID de la barbería
+                    else:
+                        file.write(line)
+
             # Redirigir a la lista de barberías o la vista que desees
             return redirect('listar_barberias')  # O la URL que desees
 
@@ -129,7 +330,6 @@ def crear_barberia(request):
     return render(request, 'crear_barberia.html', {'barberia_form': barberia_form})
 
 def modificar_barberia(request, barberia_id):
-    db = firestore.client()
     barberia_ref = db.collection('datos-barberias').document(barberia_id)
     barberia_doc = barberia_ref.get()
 
@@ -181,7 +381,7 @@ def modificar_barberia(request, barberia_id):
                 barberia_registrada_ref.set(barberia_registrada_data)
 
                 # Redirigir a la lista de barberías o la vista que desees
-                return redirect('administrar_barberia', barberia_id=barberia_id)
+                return redirect('administrar_barberia')
         else:
             # Si el método es GET, pre-cargar los datos en el formulario
             barberia_form = BarberiaForm(initial=barberia_data)
@@ -214,7 +414,7 @@ def agregar_corte(request, barberia_id):
                     # Validar que el nombre del corte no esté ya en los cortes existentes
                     if nombre in cortes:
                         # Si el corte ya existe, redirige sin error
-                        return redirect('administrar_barberia', barberia_id=barberia_id)
+                        return redirect('administrar_barberia')
 
                     # Si el corte no existe, agregarlo
                     cortes[nombre] = precio
@@ -226,10 +426,10 @@ def agregar_corte(request, barberia_id):
 
             except ValueError:
                 # Manejar el caso donde el precio no es un número válido
-                return redirect('administrar_barberia', barberia_id=barberia_id)
+                return redirect('administrar_barberia')
 
     # Redirige a la vista original después de agregar el corte
-    return redirect('administrar_barberia', barberia_id=barberia_id)
+    return redirect('administrar_barberia')
 
 def eliminar_corte(request, barberia_id, corte_nombre):
     print(f"Solicitando eliminar el corte: {corte_nombre} de la barbería: {barberia_id}")
@@ -261,7 +461,7 @@ def eliminar_corte(request, barberia_id, corte_nombre):
             print(f"No se encontró el documento de la barbería con ID {barberia_id}.")
     
     # Redirigir de vuelta a la página de la barbería
-    return redirect('administrar_barberia', barberia_id=barberia_id)
+    return redirect('administrar_barberia')
 
 def modificar_corte(request, barberia_id, corte_nombre):
     try:
@@ -295,7 +495,7 @@ def modificar_corte(request, barberia_id, corte_nombre):
                     return render(request, 'error.html', {'error': 'Precio no válido'})
 
             # Redirigir a la vista principal de la barbería
-            return redirect('administrar_barberia', barberia_id=barberia_id)
+            return redirect('administrar_barberia')
 
     except Exception as e:
         return render(request, 'error.html', {'error': str(e)})
@@ -425,7 +625,7 @@ def register_view(request):
     return render(request, 'register.html')
 
 # Vista para la página principal (Dashboard) después de iniciar sesión
-def dashboard(request):
+
     """
     Página principal después de iniciar sesión.
     """
@@ -532,7 +732,7 @@ def lista_de_postulantes(request, barberia_id):
 
         if not barberia.exists:
             messages.error(request, 'La barbería no existe.')
-            return redirect('administrar_barberia', barberia_id=barberia_id)  # Redirigir si la barbería no existe
+            return redirect('administrar_barberia') 
 
         # Obtener los postulantes de la barbería
         postulantes_ref = barberia_ref.collection('postulantes')
@@ -567,7 +767,7 @@ def lista_de_postulantes(request, barberia_id):
     except Exception as e:
         print(f"Error al recuperar los postulantes: {e}")
         messages.error(request, 'Hubo un problema al recuperar la lista de postulantes.')
-        return redirect('administrar_barberia', barberia_id=barberia_id)
+        return redirect('administrar_barberia')
 
 def contratar_postulante(request, barberia_id, postulante_uid):
     try:
@@ -604,7 +804,7 @@ def lista_de_trabajadores(request, barberia_id):
 
         if not barberia.exists:
             messages.error(request, 'La barbería no existe.')
-            return redirect('administrar_barberia', barberia_id=barberia_id)  # Redirigir si la barbería no existe
+            return redirect('administrar_barberia')  # Redirigir si la barbería no existe
 
         # Obtener los trabajadores de la barbería
         trabajadores_ref = barberia_ref.collection('trabajadores')
@@ -638,7 +838,7 @@ def lista_de_trabajadores(request, barberia_id):
     except Exception as e:
         print(f"Error al recuperar los trabajadores: {e}")
         messages.error(request, 'Hubo un problema al recuperar la lista de trabajadores.')
-        return redirect('administrar_barberia', barberia_id=barberia_id)
+        return redirect('administrar_barberia')
 
 def galeria_fotos(request, barberia_id):
     try:
@@ -669,7 +869,7 @@ def galeria_fotos(request, barberia_id):
     except Exception as e:
         print(f"Error al cargar la galería: {e}")
         messages.error(request, "Error al cargar la galería.")
-        return redirect('administrar_barberia', barberia_id=barberia_id)
+        return redirect('administrar_barberia')
 
 def agregar_foto_cliente(request, barberia_id):
     try:
@@ -701,7 +901,7 @@ def agregar_foto_cliente(request, barberia_id):
     except Exception as e:
         print(f"Error al cargar la galería: {e}")
         messages.error(request, "Error al cargar la galería.")
-        return redirect('administrar_barberia', barberia_id=barberia_id)
+        return redirect('administrar_barberia')
 
 def agregar_foto(request, barberia_id):
     if request.method == 'POST':
@@ -769,4 +969,95 @@ def eliminar_foto(request, barberia_id, id_foto):
 
     return redirect('galeria_fotos', barberia_id=barberia_id)
 
+def login_view2(request, barberia_id):
+    """
+    Vista para iniciar sesión de un usuario, con redirección a la barbería seleccionada.
+    """
+    if request.method == 'POST':
+        correo = request.POST.get('correo')
+        password = request.POST.get('password')
 
+        # Validar campos vacíos
+        if not correo or not password:
+            messages.error(request, 'Correo y contraseña son obligatorios.')
+            return redirect('login2', barberia_id=barberia_id)
+
+        try:
+            # Intentar autenticar al usuario por correo
+            user = auth.get_user_by_email(correo)
+            uid = user.uid
+
+            # Recuperar datos del usuario desde Firestore
+            db = firestore.client()
+            usuario_ref = db.collection('usuarios').document(uid)
+            usuario_doc = usuario_ref.get()
+
+            if usuario_doc.exists:
+                usuario_data = usuario_doc.to_dict()
+                nombre = usuario_data.get('nombre', 'No definido')
+                telefono = usuario_data.get('telefono', 'No definido')
+                tipo_usuario = usuario_data.get('tipo_usuario', 'No definido')  # Agregamos tipo_usuario
+
+                # Guardar los datos del usuario actual (con tipo_usuario)
+                guardar_usuario_actual(correo, password, nombre, telefono, uid, tipo_usuario)
+
+                # Redirigir a la barbería seleccionada
+                messages.success(request, 'Inicio de sesión exitoso.')
+                return redirect('barberia_seleccionada', barberia_id=barberia_id)
+            else:
+                messages.error(request, 'No se encontraron los datos del usuario en la base de datos.')
+                return redirect('login2', barberia_id=barberia_id)
+
+        except exceptions.NotFoundError:
+            messages.error(request, 'El correo no está registrado.')
+            return redirect('login2', barberia_id=barberia_id)
+        except exceptions.FirebaseError as e:
+            messages.error(request, f'Error al iniciar sesión: {e}')
+            return redirect('login2', barberia_id=barberia_id)
+
+    # Renderizar formulario de inicio de sesión para solicitudes GET
+    return render(request, 'login2.html', {'barberia_id': barberia_id})
+
+def cambiar_estado(request, cita_id):
+    db = firestore.client()
+    
+    # Obtener la cita
+    cita_ref = db.collection('citas').document(cita_id)
+    cita_doc = cita_ref.get()
+
+    if cita_doc.exists:
+        cita_data = cita_doc.to_dict()
+        
+        # Asegúrate de que todos los campos existan en cita_data antes de usarlos
+        barberia_id = cita_data.get('barberia_id', None)
+        if barberia_id is None:
+            return render(request, 'error.html', {'message': 'No se encontró barberia_id en la cita'})
+        
+        # Restante de la lógica para cambiar el estado o procesar la cita
+        # Tu lógica aquí
+        
+        # Si todo va bien, redirige a donde sea necesario
+        return render(request, 'administrar_barberia.html')
+    
+    else:
+        return render(request, 'error.html', {'message': 'Cita no encontrada'})
+    
+def eliminar_cita(request, cita_id):
+    db = firestore.client()
+    cita_ref = db.collection('citas').document(cita_id)
+
+    # Verificar si la cita existe antes de eliminarla
+    if cita_ref.get().exists:
+        cita_ref.delete()
+        messages.success(request, 'Cita eliminada exitosamente.')
+    else:
+        messages.error(request, 'Cita no encontrada.')
+
+    # Asegurarse de que el ID de la barbería esté presente en la solicitud
+    barberia_id = request.POST.get('barberia_id')  # Verificar que esté presente
+    if not barberia_id:
+        messages.error(request, 'El ID de la barbería no fue proporcionado.')
+        return redirect('listar_barberias')  # Redirigir si no se encontró el barberia_id
+
+    # Volver a la vista de administración de barbería
+    return redirect('administrar_barberia')   

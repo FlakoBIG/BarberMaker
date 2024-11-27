@@ -4,12 +4,20 @@
 {% load static %}
 <link href="{% static 'css/listar_barberias.css' %}" rel="stylesheet">
 <div class="barber-container">
-
+    <!-- Barra de búsqueda -->
+    <form method="GET" action="" class="search-box">
+        <input type="text" name="q" placeholder="Buscar" class="search-input" value="{{ request.GET.q|default:'' }}">
+        <button type="submit" class="search-button">
+            <svg viewBox="0 0 24 24" class="search-icon">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </button>
+    </form>
 
     <!-- Lista de barberías -->
     <div class="barbershop-list">
         {% for barberia in barberias %}
-        <a href="{% url 'barberia_seleccionada' barberia.id %}" class="barbershop-item">
+        <a href="{% url 'login2' barberia.id %}" class="barbershop-item">
             <div class="scissors-icon">✂️</div>
             <div class="barbershop-name">{{ barberia.nombre }}</div>
             {% if barberia.estado == 1 %}
@@ -21,7 +29,5 @@
         </a>
         {% endfor %}
     </div>
-
 </div>
-
 {% endblock %}

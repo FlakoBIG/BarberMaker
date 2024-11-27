@@ -71,14 +71,13 @@
                                     <p class="mb-0"><span class="dot">●</span> Precio: {{ precio }}</p>
                                 </div>
                                 <div>
-                                    <!-- Botón para reservar -->
-                                    <button class="btn btn-success btn-sm me-2">Reservar</button>
+                                    <!-- Botón para abrir el modal de reserva -->
+                                    <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#reservaModal" data-corte="{{ nombre }}">Reservar</button>
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
                 {% else %}
-                    <!-- Mensaje de "No hay cortes" estilizado -->
                     <div class="alert alert-info text-center" role="alert">
                         <strong>No hay ningún corte disponible.</strong><br>
                         ¡Aún no se han añadido servicios a esta barbería! Agrega cortes para empezar a ofrecerlos.
@@ -91,4 +90,51 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="reservaModal" tabindex="-1" aria-labelledby="reservaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'barberia_seleccionada' barberia_id=barberia.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reservaModalLabel">Reservar Corte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Campo oculto para pasar el corte y el precio -->
+                    <input type="hidden" name="corte" id="corteIdInput" value="">
+                    <input type="hidden" name="precio" id="precioInput" value="">
+                    <input type="hidden" name="correo" id="correoInput" value="{{ request.user.email }}"> <!-- Correo directamente del backend -->
+                    
+                    <label for="horarioSelect" class="form-label">Selecciona un horario:</label>
+                    <select class="form-select" id="horarioSelect" name="hora" required>
+                        {% for horario in horarios_disponibles %}
+                            <option value="{{ horario }}">{{ horario }}</option>
+                        {% empty %}
+                            <option>No hay horarios disponibles</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar Reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Este código se ejecutará cuando el modal de reserva se abra
+    const reservaModal = document.getElementById('reservaModal');
+    reservaModal.addEventListener('show.bs.modal', function(event) {
+        // Obtener los datos del botón de reserva (nombre del corte y precio)
+        const button = event.relatedTarget; // Botón que activó el modal
+        const corte = button.getAttribute('data-corte'); // El nombre del corte
+        const precio = button.getAttribute('data-precio'); // El precio del corte
+
+        // Rellenar los campos del formulario con los datos del corte
+        document.getElementById('corteIdInput').value = corte;
+        document.getElementById('precioInput').value = precio;
+    });
+</script>
 {% endblock %}

@@ -22,8 +22,9 @@ urlpatterns = [
     path('crear_barberia/', views.crear_barberia, name='crear_barberia'),
     path('listar_barberias/', views.listar_barberias, name='listar_barberias'),
     path('barberia/<str:barberia_id>/', views.barberia_seleccionada, name='barberia_seleccionada'),
-    path('administrar_barberia/<str:barberia_id>/', views.administrar_barberia, name='administrar_barberia'),
+    path('administrar_barberia/', views.administrar_barberia, name='administrar_barberia'),
     path('modificar_barberia/<str:barberia_id>/', views.modificar_barberia, name='modificar_barberia'),
+    path('eliminar_barberia/<str:barberia_id>/', views.eliminar_barberia, name='eliminar_barberia'),
     path('agregar_corte/<str:barberia_id>/', views.agregar_corte, name='agregar_corte'),
     path('modificar_corte/<str:barberia_id>/<str:corte_nombre>/', views.modificar_corte, name='modificar_corte'),
     path('eliminar_corte/<str:barberia_id>/<str:corte_nombre>/', views.eliminar_corte, name='eliminar_corte'),
@@ -31,7 +32,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.login_view, name='logout'),
-    path('dashboard/', views.dashboard, name='dashboard'),
+    
     path('postular/<str:barberia_id>', views.postular, name='postular'),  
     path('lista_de_postulantes/<str:barberia_id>', views.lista_de_postulantes, name='lista_de_postulantes'),
     path('contratar_postulante/<str:barberia_id>/<str:postulante_uid>/', views.contratar_postulante, name='contratar_postulante'),
@@ -40,15 +41,8 @@ urlpatterns = [
     path('agregar-foto/<str:barberia_id>/', views.agregar_foto, name='agregar_foto'),
     path('agregar_foto_cliente/<str:barberia_id>/', views.agregar_foto_cliente, name='agregar_foto_cliente'),
     path('administrar_barberia/<str:barberia_id>/Fotos/<str:id_foto>/eliminar/', views.eliminar_foto, name='eliminar_foto'),
-    
-
-
-  
-
-
-
-
-
-
-    
+    #----------------------------------------nuevo el cambio de estado aun no funciona
+    path('login2/<str:barberia_id>/', views.login_view2, name='login2'),#
+    path('cambiar_estado/<str:cita_id>/', views.cambiar_estado, name='cambiar_estado'),
+    path('eliminar_cita/<str:cita_id>/', views.eliminar_cita, name='eliminar_cita'),
     ]

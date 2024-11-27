@@ -18,18 +18,28 @@
         </div>
         <ul class="list-unstyled p-3">
             <li class="mb-2">
-                <a href="../../../../../listar_barberias/" class="text-white text-decoration-none">
+                <a href="{% url 'listar_barberias' %}" class="text-white text-decoration-none">
                     <i class="fas fa-home me-2"></i>Inicio
                 </a>
             </li>
             <li class="mb-2">
-                <a href="../../../../../crear_barberia/" class="text-white text-decoration-none">
-                    <i class="fas fa-calendar me-2"></i>Ingresar mi barberia
+                <a href="{% url 'crear_barberia' %}" class="text-white text-decoration-none">
+                    <i class="fas fa-cut me-2"></i>Ingresar mi barberia
                 </a>
             </li>
             <li class="mb-2">
-                <a href="../../../../../administrar_barberia/aSnYzDFMMVB7qZ0xz7E1" class="text-white text-decoration-none">
-                    <i class="fas fa-calendar me-2"></i>Mi barberia
+                <a href="{% url 'administrar_barberia' %}" class="text-white text-decoration-none">
+                    <i class="fas fa-cut me-2"></i>Mi barberia
+                </a>
+            </li>
+            <li class="mb-2">
+                <a href="{% url 'login' %}" class="text-white text-decoration-none">
+                    <i class="fas fa-cut me-2"></i>Logearse
+                </a>
+            </li>
+            <li class="mb-2">
+                <a href="{% url 'register' %}" class="text-white text-decoration-none">
+                    <i class="fas fa-cut me-2"></i>Registrarse
                 </a>
             </li>
         </ul>
@@ -51,7 +61,7 @@
             <!-- AQUI SE MUETRAN LAS COSAS DE LAS OTRAS PAGINAS -->
             {% endblock %}
         </div>
-    </div>g
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>

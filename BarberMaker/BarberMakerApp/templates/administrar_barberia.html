@@ -27,6 +27,14 @@
         <div class="col-md-6 info-section">
             <div class="mb-3">
                 <p class="info-item"><span class="dot">●</span> Nombre: {{ barberia.nombre }}</p>
+                <p class="info-item">
+                    <span class="dot">●</span> Estado: 
+                    {% if barberia.estado == 1 %}
+                      Abierto
+                    {% else %}
+                      Cerrado
+                    {% endif %}
+                  </p>
                 <p class="info-item"><span class="dot">●</span> Horario: {{ barberia.horario1 }} - {{ barberia.horario2 }}</p>
                 <p class="info-item"><span class="dot">●</span> Dirección: {{ barberia.direccion }}</p>
             </div>
@@ -46,66 +54,111 @@
 
             <!-- Botón para editar la información -->
             <button class="btn btn-success w-100 mb-3" data-bs-toggle="modal" data-bs-target="#editInfoModal">Editar información</button>
+            <button class="btn btn-danger w-100 mb-3" data-bs-toggle="modal" data-bs-target="#EliminarModal">Borrar Barberia</button>
         </div>
 
         <!-- Columna derecha con lista de servicios -->
         <div class="col-md-6">
-                <div class="services-list mb-3">
-                    {% if cortes %}
-                    {% for nombre, precio in cortes.items %}
-                    <div class="service-item mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h3>{{ nombre }}</h3>
-                                <p class="mb-0"><span class="dot">●</span> Precio: {{ precio }}</p>
-                            </div>
-                            <div>
-                                <!-- Botón para abrir el modal eliminal -->
-                                <button type="button" class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" 
-                                        data-nombre="{{ nombre }}" data-url="{% url 'eliminar_corte' barberia_id=barberia.id corte_nombre=nombre %}">
-                                    Eliminar
-                                </button>
-                                <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#confirmModifyModal" 
-                                data-nombre="{{ nombre }}" 
-                                data-precio="{{ precio }}" 
-                                data-url="{% url 'modificar_corte' barberia_id=barberia.id corte_nombre=nombre %}">
-                                Modificar precio
+            <div class="services-list mb-3">
+                {% if cortes %}
+                {% for nombre, precio in cortes.items %}
+                <div class="service-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ nombre }}</h3>
+                            <p class="mb-0"><span class="dot2">●</span> Precio: {{ precio }}</p>
+                        </div>
+                        <div>
+                            <!-- Botón para abrir el modal eliminal -->
+                            <button type="button" class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" 
+                                    data-nombre="{{ nombre }}" data-url="{% url 'eliminar_corte' barberia_id=barberia.id corte_nombre=nombre %}">
+                                Eliminar
                             </button>
-                            </div>
+                            <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#confirmModifyModal" 
+                            data-nombre="{{ nombre }}" 
+                            data-precio="{{ precio }}" 
+                            data-url="{% url 'modificar_corte' barberia_id=barberia.id corte_nombre=nombre %}">
+                            Modificar precio
+                        </button>
                         </div>
                     </div>
-                {% endfor %}
-                
-                
-                    {% else %}
-                        <!-- Mensaje de "No hay cortes" estilizado -->
-                        <div class="alert alert-info text-center" role="alert">
-                            <strong>No hay ningún corte disponible.</strong><br>
-                            ¡Aún no se han añadido servicios a esta barbería! Agrega cortes para empezar a ofrecerlos.
-                        </div>
-                    {% endif %}
                 </div>
+            {% endfor %}
+            
+            
+                {% else %}
+                    <!-- Mensaje de "No hay cortes" estilizado -->
+                    <div class="alert alert-info text-center " role="alert">
+                        <strong>No hay ningún corte disponible.</strong><br>
+                        ¡Aún no se han añadido servicios a esta barbería! Agrega cortes para empezar a ofrecerlos.
+                    </div>
+                {% endif %}
+            </div>
+            {% if citas and citas|length > 0 %}
+    <h3>Citas Programadas</h3>
+    <ul class="list-group">
+        {% for cita in citas %}
+    <li class="list-group-item d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <p><strong>Hora:</strong> {{ cita.hora_cita|default:"No especificada" }}</p>
+            <p><strong>Corte:</strong> {{ cita.nombre_corte|default:"Desconocido" }}</p>
+            <p><strong>Precio:</strong> {{ cita.precio_corte|default:"No disponible" }}</p>
+            <p><strong>Correo del usuario:</strong> {{ cita.correo_usuario|default:"No registrado" }}</p>
+        </div>
+        <form method="POST" action="{% url 'cambiar_estado' cita.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning">Cambiar estado</button>
+          </form>
+          
+          <form method="POST" action="{% url 'eliminar_cita' cita.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+          </form>
+    </li>
+{% endfor %}
+    </ul>
+{% else %}
+    <p>No hay citas programadas para esta barbería.</p>
+{% endif %}
 
             <!-- Botones inferiores -->
             <div class="action-buttons">
                 <div class="row g-2">
+                    <!-- Botón para postulantes -->
                     <div class="col-6">
                         <a href="{% url 'lista_de_postulantes' barberia_id=barberia.id %}" class="btn btn-success w-100">Postulantes</a>
                     </div>
+
+                    <!-- Botón para trabajadores -->
                     <div class="col-6">
                         <a href="{% url 'lista_de_trabajadores' barberia_id=barberia.id %}" class="btn btn-success w-100">Trabajadores</a>
                     </div>
+
+                    <!-- Botón para agregar corte -->
                     <div class="col-6">
                         <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#agregarCorteModal">Agregar corte</button>
                     </div>
+
+                    <!-- Botón para fotos -->
                     <div class="col-6">
                         <a href="{% url 'galeria_fotos' barberia_id=barberia.id %}" class="btn btn-success w-100">Fotos</a>
                     </div>
+
+                    <!-- Botón para cambiar el estado de la barbería -->
+                    <div class="col-6">
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn {% if estado == 1 %}btn-danger{% else %}btn-primary{% endif %} w-100">
+                                {% if estado == 1 %}
+                                    Cerrar Barbería
+                                {% else %}
+                                    Abrir Barbería
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal para Editar Información de la Barbería -->
 <div class="modal fade" id="editInfoModal" tabindex="-1" aria-labelledby="editInfoModalLabel" aria-hidden="true">
@@ -143,6 +196,28 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+                </form>
+        </div>
+    </div>
+</div>
+<!-- Modal para eliminar barbería -->
+<div class="modal fade" id="EliminarModal" tabindex="-1" aria-labelledby="editInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editInfoModalLabel">Eliminar Barbería</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'eliminar_barberia' barberia.id %}">
+                    {% csrf_token %}
+                    <p>¿Estás seguro de que deseas eliminar esta barbería de la base de datos?</p>
+                    <p>No hay vuelta atrás si la borras. Tendrás que empezar desde cero.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Sí, eliminar</button>
             </div>
                 </form>
         </div>
@@ -253,8 +328,5 @@
         form.action = url;
     });
 </script>
-
-
-
 
 {% endblock %}
