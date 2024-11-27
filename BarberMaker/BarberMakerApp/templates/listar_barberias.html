@@ -17,7 +17,7 @@
     <!-- Lista de barberías -->
     <div class="barbershop-list">
         {% for barberia in barberias %}
-        <a href="{% url 'login2' barberia.id %}" class="barbershop-item">
+        <a href="{% url 'barberia_seleccionada' barberia.id %}" class="barbershop-item">
             <div class="scissors-icon">✂️</div>
             <div class="barbershop-name">{{ barberia.nombre }}</div>
             {% if barberia.estado == 1 %}

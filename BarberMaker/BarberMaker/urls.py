@@ -42,7 +42,6 @@ urlpatterns = [
     path('agregar_foto_cliente/<str:barberia_id>/', views.agregar_foto_cliente, name='agregar_foto_cliente'),
     path('administrar_barberia/<str:barberia_id>/Fotos/<str:id_foto>/eliminar/', views.eliminar_foto, name='eliminar_foto'),
     #----------------------------------------nuevo el cambio de estado aun no funciona
-    path('login2/<str:barberia_id>/', views.login_view2, name='login2'),#
     path('cambiar_estado/<str:cita_id>/', views.cambiar_estado, name='cambiar_estado'),
     path('eliminar_cita/<str:cita_id>/', views.eliminar_cita, name='eliminar_cita'),
     ]

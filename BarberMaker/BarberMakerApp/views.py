@@ -99,76 +99,81 @@ def eliminar_barberia(request, barberia_id):
     return redirect('listar_barberias')
 
 def barberia_seleccionada(request, barberia_id):
-    db = firestore.client()
-    barberia_ref = db.collection('datos-barberias').document(barberia_id)
-    barberia_doc = barberia_ref.get()
+    from usuario.usuario_actual import correo, password
 
-    if barberia_doc.exists:
-        barberia_data = barberia_doc.to_dict()
-        cortes = barberia_data.get('cortes', {})
-        precio=barberia_data.get('precio',{})
-
-        citas_ref = db.collection('citas').where('barberia_id', '==', barberia_id)
-        cita_docs = citas_ref.stream()
-
-        citas = []
-        for cita_doc in cita_docs:
-            cita = cita_doc.to_dict()
-            citas.append(cita)
-
-        horario1_str = barberia_data.get('horario1')
-        horario2_str = barberia_data.get('horario2')
-
-        horario1 = datetime.strptime(horario1_str, '%H:%M')
-        horario2 = datetime.strptime(horario2_str, '%H:%M')
-
-        horarios_disponibles = []
-        current_time = horario1
-        while current_time <= horario2:
-            horarios_disponibles.append(current_time.strftime('%H:%M'))
-            current_time += timedelta(minutes=30)
-
-        if request.method == 'POST':
-            hora_cita = request.POST.get('hora')
-            corte_seleccionado = request.POST.get('corte')
-            corte_seleccionado1 = request.POST.get('precio')
-            
-            correo_usuario = request.POST.get('correo')
-
-            hora_cita_obj = datetime.strptime(hora_cita, '%H:%M')
-
-            if horario1 <= hora_cita_obj <= horario2:
-                # Crear la cita en la base de datos
-                cita_data = {
-                    'barberia_id': barberia_id,
-                    'hora': hora_cita,
-                    'corte': corte_seleccionado,
-                    'precio':corte_seleccionado1 ,
-                    'correo_usuario': correo_usuario,
-                }
-
-                db.collection('citas').add(cita_data)
-                messages.success(request, 'Cita registrada exitosamente.')
-                return redirect('barberia_seleccionada', barberia_id=barberia_id)
-
-            else:
-                return render(request, 'barberia_seleccionada.html', {
-                    'barberia': barberia_data,
-                    'cortes': cortes,
-                    'precio':precio,
-                    'citas': citas,
-                    'error': 'La hora seleccionada está fuera del horario de atención de la barbería.'
-                })
-
-        return render(request, 'barberia_seleccionada.html', {
-            'barberia': barberia_data,
-            'cortes': cortes,
-            'precio':precio,
-            'citas': citas,
-            'horarios_disponibles': horarios_disponibles,
-        })
+    if not correo or not password:
+        return redirect('login') 
     else:
-        return render(request, 'error.html', {'message': 'Barbería no encontrada'})
+        db = firestore.client()
+        barberia_ref = db.collection('datos-barberias').document(barberia_id)
+        barberia_doc = barberia_ref.get()
+
+        if barberia_doc.exists:
+            barberia_data = barberia_doc.to_dict()
+            cortes = barberia_data.get('cortes', {})
+            precio=barberia_data.get('precio',{})
+
+            citas_ref = db.collection('citas').where('barberia_id', '==', barberia_id)
+            cita_docs = citas_ref.stream()
+
+            citas = []
+            for cita_doc in cita_docs:
+                cita = cita_doc.to_dict()
+                citas.append(cita)
+
+            horario1_str = barberia_data.get('horario1')
+            horario2_str = barberia_data.get('horario2')
+
+            horario1 = datetime.strptime(horario1_str, '%H:%M')
+            horario2 = datetime.strptime(horario2_str, '%H:%M')
+
+            horarios_disponibles = []
+            current_time = horario1
+            while current_time <= horario2:
+                horarios_disponibles.append(current_time.strftime('%H:%M'))
+                current_time += timedelta(minutes=30)
+
+            if request.method == 'POST':
+                hora_cita = request.POST.get('hora')
+                corte_seleccionado = request.POST.get('corte')
+                corte_seleccionado1 = request.POST.get('precio')
+                
+                correo_usuario = request.POST.get('correo')
+
+                hora_cita_obj = datetime.strptime(hora_cita, '%H:%M')
+
+                if horario1 <= hora_cita_obj <= horario2:
+                    # Crear la cita en la base de datos
+                    cita_data = {
+                        'barberia_id': barberia_id,
+                        'hora': hora_cita,
+                        'corte': corte_seleccionado,
+                        'precio':corte_seleccionado1 ,
+                        'correo_usuario': correo_usuario,
+                    }
+
+                    db.collection('citas').add(cita_data)
+                    messages.success(request, 'Cita registrada exitosamente.')
+                    return redirect('barberia_seleccionada', barberia_id=barberia_id)
+
+                else:
+                    return render(request, 'barberia_seleccionada.html', {
+                        'barberia': barberia_data,
+                        'cortes': cortes,
+                        'precio':precio,
+                        'citas': citas,
+                        'error': 'La hora seleccionada está fuera del horario de atención de la barbería.'
+                    })
+
+            return render(request, 'barberia_seleccionada.html', {
+                'barberia': barberia_data,
+                'cortes': cortes,
+                'precio':precio,
+                'citas': citas,
+                'horarios_disponibles': horarios_disponibles,
+            })
+        else:
+            return render(request, 'error.html', {'message': 'Barbería no encontrada'})
 
 def administrar_barberia(request):
     from usuario.usuario_actual import tipo_usuario, uid  # Asumiendo que tienes el UID del usuario actual
@@ -968,55 +973,6 @@ def eliminar_foto(request, barberia_id, id_foto):
         messages.error(request, 'Error al eliminar la foto.')
 
     return redirect('galeria_fotos', barberia_id=barberia_id)
-
-def login_view2(request, barberia_id):
-    """
-    Vista para iniciar sesión de un usuario, con redirección a la barbería seleccionada.
-    """
-    if request.method == 'POST':
-        correo = request.POST.get('correo')
-        password = request.POST.get('password')
-
-        # Validar campos vacíos
-        if not correo or not password:
-            messages.error(request, 'Correo y contraseña son obligatorios.')
-            return redirect('login2', barberia_id=barberia_id)
-
-        try:
-            # Intentar autenticar al usuario por correo
-            user = auth.get_user_by_email(correo)
-            uid = user.uid
-
-            # Recuperar datos del usuario desde Firestore
-            db = firestore.client()
-            usuario_ref = db.collection('usuarios').document(uid)
-            usuario_doc = usuario_ref.get()
-
-            if usuario_doc.exists:
-                usuario_data = usuario_doc.to_dict()
-                nombre = usuario_data.get('nombre', 'No definido')
-                telefono = usuario_data.get('telefono', 'No definido')
-                tipo_usuario = usuario_data.get('tipo_usuario', 'No definido')  # Agregamos tipo_usuario
-
-                # Guardar los datos del usuario actual (con tipo_usuario)
-                guardar_usuario_actual(correo, password, nombre, telefono, uid, tipo_usuario)
-
-                # Redirigir a la barbería seleccionada
-                messages.success(request, 'Inicio de sesión exitoso.')
-                return redirect('barberia_seleccionada', barberia_id=barberia_id)
-            else:
-                messages.error(request, 'No se encontraron los datos del usuario en la base de datos.')
-                return redirect('login2', barberia_id=barberia_id)
-
-        except exceptions.NotFoundError:
-            messages.error(request, 'El correo no está registrado.')
-            return redirect('login2', barberia_id=barberia_id)
-        except exceptions.FirebaseError as e:
-            messages.error(request, f'Error al iniciar sesión: {e}')
-            return redirect('login2', barberia_id=barberia_id)
-
-    # Renderizar formulario de inicio de sesión para solicitudes GET
-    return render(request, 'login2.html', {'barberia_id': barberia_id})
 
 def cambiar_estado(request, cita_id):
     db = firestore.client()
