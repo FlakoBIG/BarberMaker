@@ -37,11 +37,13 @@ urlpatterns = [
     path('lista_de_postulantes/<str:barberia_id>', views.lista_de_postulantes, name='lista_de_postulantes'),
     path('contratar_postulante/<str:barberia_id>/<str:postulante_uid>/', views.contratar_postulante, name='contratar_postulante'),
     path('lista_de_trabajadores/<str:barberia_id>', views.lista_de_trabajadores, name='lista_de_trabajadores'),
+    path('eliminar_trabajador/<str:barberia_id>/<str:trabajador_uid>/', views.eliminar_trabajador, name='eliminar_trabajador'),
     path('galeria/<str:barberia_id>/', views.galeria_fotos, name='galeria_fotos'),
     path('agregar-foto/<str:barberia_id>/', views.agregar_foto, name='agregar_foto'),
     path('agregar_foto_cliente/<str:barberia_id>/', views.agregar_foto_cliente, name='agregar_foto_cliente'),
     path('administrar_barberia/<str:barberia_id>/Fotos/<str:id_foto>/eliminar/', views.eliminar_foto, name='eliminar_foto'),
     #----------------------------------------nuevo el cambio de estado aun no funciona
     path('cambiar_estado/<str:cita_id>/', views.cambiar_estado, name='cambiar_estado'),
-    path('eliminar_cita/<str:cita_id>/', views.eliminar_cita, name='eliminar_cita'),
+    path('barberia/<str:barberia_id>/citas/eliminar/<str:cita_id>/', views.eliminar_cita, name='eliminar_cita'),
+    path('barberia/<str:barberia_id>/citas/', views.ver_citas, name='ver_citas'),
     ]

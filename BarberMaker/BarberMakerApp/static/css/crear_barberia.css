@@ -78,3 +78,27 @@ button[type="submit"]:hover {
         width: calc(100% - 20px);
     }
 }
+.pole-icon {
+    width: 40px;
+    height: 40px;
+}
+.header {
+    background-color: #009688;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.barbershop-detail {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+/* Navigation */
+.back-button {
+    color: #009688;
+    text-decoration: none;
+    font-size: 16px;
+}

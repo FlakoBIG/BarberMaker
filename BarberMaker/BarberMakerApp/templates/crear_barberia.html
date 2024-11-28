@@ -3,9 +3,18 @@
 {% block content %}
 {% load static %}
 <link href="{% static 'css/crear_barberia.css' %}" rel="stylesheet">
-<div class="form-container">
-    <h1>Crear Barbería</h1>
-    
+<div class="container-fluid barbershop-detail">
+    <div class="header mb-3 ">
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+            <h1>Crear Barbería</h1>
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+    </div>
+            <!-- Back button -->
+            <div class="nav-bar mb-3">
+                <a href="{% url 'listar_barberias' %}" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
     <form method="post" class="barberia-form">
         {% csrf_token %}
         

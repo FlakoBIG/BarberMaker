@@ -94,33 +94,6 @@
                     </div>
                 {% endif %}
             </div>
-            {% if citas and citas|length > 0 %}
-    <h3>Citas Programadas</h3>
-    <ul class="list-group">
-        {% for cita in citas %}
-    <li class="list-group-item d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <p><strong>Hora:</strong> {{ cita.hora_cita|default:"No especificada" }}</p>
-            <p><strong>Corte:</strong> {{ cita.nombre_corte|default:"Desconocido" }}</p>
-            <p><strong>Precio:</strong> {{ cita.precio_corte|default:"No disponible" }}</p>
-            <p><strong>Correo del usuario:</strong> {{ cita.correo_usuario|default:"No registrado" }}</p>
-        </div>
-        <form method="POST" action="{% url 'cambiar_estado' cita.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-warning">Cambiar estado</button>
-          </form>
-          
-          <form method="POST" action="{% url 'eliminar_cita' cita.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Eliminar</button>
-          </form>
-    </li>
-{% endfor %}
-    </ul>
-{% else %}
-    <p>No hay citas programadas para esta barbería.</p>
-{% endif %}
-
             <!-- Botones inferiores -->
             <div class="action-buttons">
                 <div class="row g-2">
@@ -157,6 +130,11 @@
                             </button>
                         </form>
                     </div>
+                     <!-- Botón para citas -->
+                    <div class="col-6">
+                        <a href="{% url 'ver_citas' barberia_id=barberia.id %}" class="btn btn-success w-100">Citas</a>
+                    </div>
+                    
                 </div>
             </div>
 

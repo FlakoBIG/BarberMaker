@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<link href="{% static 'css/barberia_seleccioanda.css' %}" rel="stylesheet">
+<div class="container-fluid barbershop-detail">
+    <div class="header mb-3 ">
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+        <h1>Citas de  {{ barberia.nombre }}</h1>
+        <img src="/static/img/barber-pole.png" alt="Barber Pole" class="pole-icon">
+    </div>
+        <!-- Back button -->
+        <div class="nav-bar mb-3">
+            <a href="{% url 'administrar_barberia' %}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+
+    {% if citas and citas|length > 0 %}
+        <ul class="list-group">
+            {% for cita in citas %}
+            <li class="list-group-item d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <p><span class="dot">●</span><strong>Hora:</strong> {{ cita.hora_cita|default:"No especificada" }}</p>
+                    <p><span class="dot">●</span><strong>Estado:</strong>
+                        {% if cita.estado == 0 %}
+                            En proceso
+                        {% elif cita.estado == 1 %}
+                            Terminado
+                        {% endif %}
+                    </p>
+                    <p><span class="dot">●</span><strong>Corte:</strong> {{ cita.nombre_corte|default:"Desconocido" }}</p>
+                    <p><span class="dot">●</span><strong>Precio:</strong> {{ cita.precio_corte|default:"No disponible" }}</p>
+                    <p><span class="dot">●</span><strong>Correo del usuario:</strong> {{ cita.correo_usuario|default:"No registrado" }}</p>
+                </div>
+            
+                <!-- Contenedor para los botones, alineado a la derecha -->
+                <div class="ms-auto d-flex gap-2 w-auto">
+                    <!-- Formulario para cambiar estado -->
+                    <form method="POST" action="{% url 'cambiar_estado' cita.id %}" class="w-100">
+                        {% csrf_token %}
+                        <button type="submit" name="cambiar_estado" class="btn btn-primary w-100">Cambiar Estado</button>
+                    </form>
+                    
+                    <!-- Botón para abrir el modal de confirmación -->
+                    <button type="button" class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ cita.id }}">Eliminar</button>
+                </div>
+            
+                <!-- Modal de confirmación de eliminación -->
+                <div class="modal fade" id="confirmDeleteModal{{ cita.id }}" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Eliminación</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                ¿Estás seguro de que deseas eliminar esta cita?
+                                <br><br>
+                                <strong>Corte: </strong>{{ cita.nombre_corte }}<br>
+                                <strong>Hora: </strong>{{ cita.hora_cita }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <form method="POST" action="{% url 'eliminar_cita' barberia.id cita.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            
+            
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            No hay citas programadas para esta barbería.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
